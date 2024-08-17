@@ -12,6 +12,7 @@ RESET='\033[0m'
 
 #============ Tools =============
 
+# Displays the title banner.
 function display-banner () {
 
 echo "______         _   _____        _                   _    _  _                        _    "
@@ -25,6 +26,7 @@ echo -e "       |_|                                 |_|                         
 
 }
 
+# Gets the username and hostname from the host.json file.
 function gethost() {
     if [ -f host.json ]; then
         username=$(jq -r '.username' host.json)
@@ -37,10 +39,17 @@ function gethost() {
     fi
 }
 
+# Displays an error message when a command fails.
+function error {
+  echo "$RED $1 $RESET"
+  return 1
+}
+
 # ===============================
 
 #============ Functions =========
 
+# Raspberry Pi Wizard function.
 function rpi() {
     case $# in
         0)
@@ -51,7 +60,7 @@ function rpi() {
         1)
             case $1 in
                 init)
-                    init
+                    init || error "Failed to initialize the Raspberry Pi Wizard."
                     ;;
                 link)
                     echo "Usage: rpi link <config_file>"
@@ -80,30 +89,30 @@ function rpi() {
     esac
 }
 
-
-
 function init() {
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        script_path=$(pwd)/src/rpi_wizard.sh
-        echo "source $script_path" >> ~/.zsh_profile
+    script_path=$(pwd)/src/rpi-wizard.sh
 
-        echo "Added the following line to your .zsh_profile file:"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "# Raspberry Pi Wizard executable" >> ~/.zshrc || error "Failed to append to .zshrc file."
+        echo "source $script_path" >> ~/.zshrc
+
+        echo "Added the following line to your .zshrc file:"
         echo -e "source $script_path \n"
-        echo "You can now use the 'rpi' command."
+        echo "You can now use the 'rpi' command globally."
+
+        exec ${SHELL} -l || error "Failed to reload the shell."
     else
-        script_path=$(pwd)/rpi_wizard.sh
         echo "Consider adding the following line to your .bashrc/.zshrc/your config file:"
         echo "source $script_path"
     fi
 
-    
-
+    echo "Ensure that the path ends with '.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'"
 }
 
 function link() {
     if [ "$#" -ne 2 ]; then
         echo "Usage: rpi link <username> <hostname>"
-        exit 1
+        return 1
     fi
 
     usr=$1
@@ -114,18 +123,34 @@ function link() {
      \"hostname\": \"$host\"
     }"
 
-    echo "$storage" > host.json
+    echo "$storage" > host.json || error "Failed to create the host.json file."
 }
 
 function unlink() {
     if [ -f host.json ]; then
-        rm host.json
+        rm host.json || error "Failed to remove the host.json file."
     else
         echo "No link found."
     fi
 }
 
 # ===============================
+
+
+
+# function check_internet() {
+#   printf "Checking if you are online..."
+#   wget -q --spider http://github.com
+#   if [ $? -eq 0 ]; then
+#     echo "Online. Continuing."
+#   else
+#     error "Offline. Go connect to the internet then run the script again."
+#   fi
+# }
+
+# check_internet
+
+# curl -sSL https://get.docker.com | sh || error "Failed to install Docker."
 
 
 # display-banner
