@@ -44,7 +44,6 @@ function gethost() {
 function rpi() {
     case $# in
         0)
-        
             display-banner
 
             echo "Usage: rpi [init|link|unlink] ..."
@@ -52,7 +51,7 @@ function rpi() {
         1)
             case $1 in
                 init)
-                    echo "Usage: rpi init <username> <hostname>"
+                    init
                     ;;
                 link)
                     echo "Usage: rpi link <config_file>"
@@ -67,9 +66,6 @@ function rpi() {
             ;;
         *)
             case $1 in
-                init)
-                    init $2 $3
-                    ;;
                 link)
                     link $2
                     ;;
@@ -86,10 +82,21 @@ function rpi() {
 
 
 
-
 function init() {
-    script_path=$(pwd)/rpi_wizard.sh
-    echo $script_path
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        script_path=$(pwd)/src/rpi_wizard.sh
+        echo "source $script_path" >> ~/.zsh_profile
+
+        echo "Added the following line to your .zsh_profile file:"
+        echo -e "source $script_path \n"
+        echo "You can now use the 'rpi' command."
+    else
+        script_path=$(pwd)/rpi_wizard.sh
+        echo "Consider adding the following line to your .bashrc/.zshrc/your config file:"
+        echo "source $script_path"
+    fi
+
+    
 
 }
 
