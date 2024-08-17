@@ -2,11 +2,13 @@
 
 > Add a short description of the project here.
 
-![screenshot](./src/assets/img/screenshot.png)
+![screenshot](./assets/img/screenshot.png)
 
 ## Getting Started
 
 ### Introduction
+
+
 
 Provide an introduction to the project. This section should be short and concise. It may include a link to an important [reference](https://example.com).
 
