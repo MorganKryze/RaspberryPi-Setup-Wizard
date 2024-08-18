@@ -45,8 +45,17 @@ function gethost() {
 
 # Displays an error message when a command fails.
 function error {
-  echo "$RED $1 $RESET"
+  echo "${RED}[error]${RESET} $1"
   return 1
+}
+
+function info {
+  echo "${BLUE}[info]${RESET} $1"
+}
+
+function description () {
+    info "${GREEN}The ${BLUE}$1${GREEN} function $2 ${RESET}\n"
+    sleep 2
 }
 
 function show-link() {
@@ -63,9 +72,11 @@ function show-link() {
 
 # Raspberry Pi Wizard function.
 function rpi() {
-
+    
     # Adds the Raspberry Pi Wizard to the shell "path".
     function init() {
+        description init "adds the Raspberry Pi Wizard shell script to your terminal path (MacOS)."
+
         declare -g project_path=$(pwd)
         script_path=$project_path/src/rpi-wizard.sh
 
@@ -74,19 +85,25 @@ function rpi() {
             echo -e "source $script_path" >> ~/.zshrc
             echo -e "export RPI_SETUP_WIZARD_PATH=$project_path \n" >> ~/.zshrc
 
-            echo "Added the following line to your .zshrc file:"
-            echo -e "source $script_path \n"
-            echo -e "Restart your terminal to use the 'rpi' command globally.\n"
+            info "Added the following line to your .zshrc file:"
+            echo -e "# Raspberry Pi Wizard executable"
+            echo -e "source ${ORANGE}$script_path${RESET}"
+            echo -e "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET} \n"
+
+            info "Restart your terminal to use the 'rpi' command globally.\n"
         else
-            echo "Consider adding the following line to your .bashrc/.zshrc/your config file:"
-            echo "source $script_path"
+            info "Consider adding the following lines to your .bashrc/.zshrc/your config file:"
+            echo -e "# Raspberry Pi Wizard executable"
+            echo -e "source ${ORANGE}$script_path${RESET}"
+            echo -e "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET} \n"
         fi
 
-        echo "Ensure that the path ends with '.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'"
+        info "Ensure that the first path ends with ${ORANGE}'.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'${RESET}"
     }
 
     # Stores the username and hostname in a JSON file.
     function link() {
+        description link "stores the username and hostname of the current used RPi in a JSON file."
         usr=$1
         host=$2
 
@@ -96,33 +113,41 @@ function rpi() {
 }"
 
         echo "$storage" > $RPI_SETUP_WIZARD_PATH/src/host.json || error "Failed to create the host.json file." || return 1
+        info "Successfully linked to user: $usr, host: $host"
     }
 
     # Removes the host.json file.
     function unlink() {
+        description unlink "removes the host.json file from the Raspberry Pi Wizard."
+
         if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
             rm $RPI_SETUP_WIZARD_PATH/src/host.json
         else
-            echo "Failed to remove the config file."
+            error "No host.json file found. Consider running 'rpi link <username> <hostname>' beforehand." || return 1
         fi
+
+        info "Successfully unlinked the Raspberry Pi."
     }
 
     # Adds an SSH key to the Raspberry Pi.
     function add-ssh() {
-        usr=$(<(gethost) head -n 1)
+        description ssh "adds an SSH key to the Raspberry Pi for passwordless login."
+
+        info "Getting the username and hostname from the host.json file.\n"
+        usr=$(gethost | head -n 1)
         if [ $? -ne 0 ]; then
-            error "Failed to get the username and hostname." || return 1
+            error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>'." || return 1
         fi
-        host=$(<(gethost) tail -n 1)
+        host=$(gethost | tail -n 1)
         
-    	echo -e "Creating SSH key \n"
+    	info "Creating new SSH key \n"
         ssh-keygen -f /Users/$global_user/.ssh/$host -C "$host" -N "$1"
 
-    	echo "Copying SSH key to $host, you will need to enter the password for $usr\n"
+    	info "Copying SSH key to $host, you will need to enter the password for $usr\n"
     	sleep 2
         ssh-copy-id -o StrictHostKeyChecking=no -i /Users/$global_user/.ssh/$host.pub $usr@$host.local
 
-    	echo "Adding $host to ~/.ssh/config\n"
+    	info "Adding $host to ~/.ssh/config\n"
         tempfile=$(mktemp)
         cat <<EOF > "$tempfile"
 Host $host
@@ -133,8 +158,7 @@ EOF
         cat ~/.ssh/config >> "$tempfile"
         mv "$tempfile" ~/.ssh/config
 
-    	echo "Testing SSH connection to $host, consider exiting to pursue configuration\n"
-        ssh $host
+    	info "You can now SSH into $host with 'ssh $host'\n"
     }
 
 
