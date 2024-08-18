@@ -8,6 +8,43 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 RESET='\033[0m'
 
+# Displays a raw message.
+# $1: The message to display.
+function txt() {
+    echo -e "${RESET}$1"
+}
+
+# Displays a blue message.
+# $1: The message to display.
+function blue() {
+    echo -e "${BLUE}$1${RESET}"
+}
+
+# Displays a green message.
+# $1: The message to display.
+function green() {
+    echo -e "${GREEN}$1${RESET}"
+}
+
+# Displays an error message when a command fails.
+# $1: The error message to display.
+function error {
+  echo -e "${RED}[error]${RESET} $1"
+  return 1
+}
+
+# Displays an information message.
+# $1: The message to display.
+function info {
+  echo "${BLUE}[info]${RESET} $1"
+}
+
+# Displays a description of a function.
+# $1: The function name.
+function description () {
+    info "${GREEN}The ${BLUE}$1${GREEN} function $2 ${RESET}\n"
+    sleep 2
+}
 # ===============================
 
 # ========== Variables ==========
@@ -18,16 +55,14 @@ global_user=$(whoami)
 
 # Displays the title banner.
 function display-banner () {
-
-echo "______         _   _____        _                   _    _  _                        _    "
-echo "| ___ \       (_) /  ___|      | |                 | |  | |(_)                      | |   "
-echo "| |_/ / _ __   _  \ \`--.   ___ | |_  _   _  _ __   | |  | | _  ____  __ _  _ __   __| |  "
-echo "|    / | '_ \ | |  \`--. \ / _ \| __|| | | || '_ \  | |/\| || ||_  / / _\` || '__| / _\` |"
-echo "| |\ \ | |_) || | /\__/ /|  __/| |_ | |_| || |_) | \  /\  /| | / / | (_| || |   | (_| |   "
-echo "\_| \_|| .__/ |_| \____/  \___| \__| \__,_|| .__/   \/  \/ |_|/___| \__,_||_|    \__,_|   "
-echo "       | |                                 | |                                            "
-echo -e "       |_|                                 |_|                                            \n"
-
+blue "______         _   _____        _                   _    _  _                        _    "
+blue "| ___ \       (_) /  ___|      | |                 | |  | |(_)                      | |   "
+blue "| |_/ / _ __   _  \ \`--.   ___ | |_  _   _  _ __   | |  | | _  ____  __ _  _ __   __| |  "
+blue "|    / | '_ \ | |  \`--. \ / _ \| __|| | | || '_ \  | |/\| || ||_  / / _\` || '__| / _\` |"
+blue "| |\ \ | |_) || | /\__/ /|  __/| |_ | |_| || |_) | \  /\  /| | / / | (_| || |   | (_| |   "
+blue "\_| \_|| .__/ |_| \____/  \___| \__| \__,_|| .__/   \/  \/ |_|/___| \__,_||_|    \__,_|   "
+blue "       | |                                 | |                                            "
+blue "       |_|                                 |_|                                            \n"
 }
 
 # Gets the username and hostname from the host.json file.
@@ -35,43 +70,79 @@ function gethost() {
     if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
         username=$(jq -r '.username' $RPI_SETUP_WIZARD_PATH/src/host.json)
         hostname=$(jq -r '.hostname' $RPI_SETUP_WIZARD_PATH/src/host.json)
-        echo "$username"
-        echo "$hostname"
+        txt "$username"
+        txt "$hostname"
     else
         # No file found.
         return 1
     fi
 }
 
-# Displays an error message when a command fails.
-function error {
-  echo "${RED}[error]${RESET} $1"
-  return 1
-}
-
-function info {
-  echo "${BLUE}[info]${RESET} $1"
-}
-
-function description () {
-    info "${GREEN}The ${BLUE}$1${GREEN} function $2 ${RESET}\n"
-    sleep 2
-}
-
+# Displays the linked username and hostname.
 function show-link() {
     if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
         username=$(gethost | head -n 1)
         hostname=$(gethost | tail -n 1)
-        echo -e "Linked to user: $username, host: $hostname\n"
+        txt "Linked to user: $username, host: $hostname\n"
     fi
 }
-
 # ==============================
 
 # ========== Functions =========
 
 # Raspberry Pi Wizard function.
 function rpi() {
+
+    function help() {
+        display-banner
+
+        echo "Open source Raspberry Pi wizard tool."
+        echo "Licensed under the MIT License, Yann M. Vidamment © 2024."
+        echo "https://github.com/MorganKryze/RaspberryPi-Setup-Wizard/"
+        sleep 1
+        echo -e "\n=============================================================================\n"
+        sleep 0.5
+        show-link
+
+        info "Available commands:\n"
+
+        for func in help init link unlink ssh; do
+            blue "  $func:"
+            case "$func" in
+            "help")
+                green "    Display the help text for each command.\n"
+                echo -e "    Usage: ${BLUE}rpi help${RESET}"
+                ;;
+            "init")
+                green "    Add the Raspberry Pi Wizard to the shell path.\n"
+                echo -e "    Usage: ${BLUE}rpi init${RESET}"
+                ;;
+            "link")
+                green "    Link the Raspberry Pi to a username and hostname.\n"
+                echo -e "    Usage: ${BLUE}rpi link${RESET} ${RED}<username> <hostname>${RESET}"
+                echo -e "      ${RED}username:${RESET} The username of the Raspberry Pi."
+                echo -e "      ${RED}hostname:${RESET} The hostname of the Raspberry Pi."
+                ;;
+
+            "unlink")
+                green "    Unlink the Raspberry Pi from a username and hostname.\n"
+                echo -e "    Usage: ${BLUE}rpi unlink${RESET}"
+                ;;
+
+            "ssh")
+                green "    Add an SSH key to the Raspberry Pi.\n"
+                echo -e "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET}"
+                echo -e "      ${ORANGE}passphrase:${RESET} The passphrase for the SSH key."
+                ;;
+
+            *)
+                error "  No help text available."
+                ;;
+            esac
+            echo ""
+            sleep 0.2
+        done
+    }
     
     # Adds the Raspberry Pi Wizard to the shell "path".
     function init() {
@@ -86,9 +157,9 @@ function rpi() {
             echo -e "export RPI_SETUP_WIZARD_PATH=$project_path \n" >> ~/.zshrc
 
             info "Added the following line to your .zshrc file:"
-            echo -e "# Raspberry Pi Wizard executable"
-            echo -e "source ${ORANGE}$script_path${RESET}"
-            echo -e "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET} \n"
+            txt "# Raspberry Pi Wizard executable"
+            txt "source ${ORANGE}$script_path${RESET}"
+            txt "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET} \n"
 
             info "Restart your terminal to use the 'rpi' command globally.\n"
         else
@@ -99,7 +170,7 @@ function rpi() {
         fi
 
         info "Ensure that the first path ends with ${ORANGE}'.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'${RESET}"
-    }
+}
 
     # Stores the username and hostname in a JSON file.
     function link() {
@@ -164,17 +235,7 @@ EOF
 
     case $# in
     0)
-        display-banner
-
-        echo "Open source Raspberry Pi wizard tool."
-        echo "Licensed under the MIT License, Yann M. Vidamment © 2024."
-        echo "https://github.com/MorganKryze/RaspberryPi-Setup-Wizard/"
-        sleep 0.5
-        echo -e "\n=============================================================================\n"
-        sleep 0.5
-        show-link
-
-        echo "Usage: rpi [init|link|unlink|ssh] ..."
+        help
         ;;
     1)
         case $1 in
@@ -182,7 +243,7 @@ EOF
                 init
                 ;;
             link)
-                echo "Usage: rpi link <username> <hostname>"
+                info "Usage: rpi link <username> <hostname>"
                 ;;
             unlink)
                 unlink
@@ -190,108 +251,62 @@ EOF
             ssh)
                 add-ssh
                 ;;
+            help)
+                help
+                ;;
             *)
-                echo "Unknown command: $1"
+                error "Unknown command: $1"
                 ;;
         esac
         ;;
     2)
         case $1 in
             init)
-                echo "Usage: rpi init"
+                info "Usage: rpi init"
                 ;;
             link)
-                echo "Usage: rpi link <username> <hostname>"
+                info "Usage: rpi link <username> <hostname>"
                 ;;
             unlink)
-                echo "Usage: rpi unlink"
+                info "Usage: rpi unlink"
                 ;;
             ssh)
                 add-ssh $2
                 ;;
+            help)
+                info "Usage: rpi help"
+                ;;
             *)
-                echo "Unknown command: $1"
+                error "Unknown command: $1"
                 ;;
         esac
         ;;
     *)
         case $1 in
             init)
-                echo "Usage: rpi init"
+                info "Usage: rpi init"
                 ;;
             link)
                 if [ $# -eq 3 ]; then
                     link $2 $3
                 else
-                    echo "Usage: rpi link <username> <hostname>"
+                    info "Usage: rpi link <username> <hostname>"
                 fi
                 ;;
             unlink)
                 unlink
                 ;;
             ssh)
-                echo "Usage: rpi ssh [passphrase]"
+                info "Usage: rpi ssh [passphrase]"
+                ;;
+            help)
+                info "Usage: rpi help"
                 ;;
             *)
-                echo "Unknown command: $1"
+                error "Unknown command: $1"
                 ;;
         esac
         ;;
     esac    
 }
-
-
-
 # ===============================
-
-
-
-# echo -e "Available functions:\n"
-    # for func in rpi-install rpi-uninstall rpi-update rpi-configure rpi-start rpi-stop rpi-restart rpi-shutdown rpi-reboot; do
-    #     echo -e "  ${BLUE}$func:${RESET}"
-    #     case "$func" in
-    #     "rpi-install")
-    #         echo -e "    Create a new Conda environment.\n"
-    #         echo -e "    Usage: ${GREEN}env-create${RESET} ${RED}[--language|-l] <language> [--version|-v] <version> [--name|-n] <env_name>${RESET}"
-    #         echo -e "      ${RED}--language, -l:${RESET} The programming language for the environment (python, dotnet, r, js)."
-    #         echo -e "      ${RED}--version, -v:${RESET} The version of the language to use."
-    #         echo -e "      ${RED}--name, -n:${RESET} The name of the environment to create."
-    #         ;;
-    #     "rpi-uninstall")
-    #         echo -e "    Uninstall Raspberry Pi OS and its dependencies.\n"
-    #         echo -e "    Usage: ${GREEN}rpi-uninstall${RESET}"
-    #         ;;
-    #     "rpi-update")
-    #         echo -e "    Update the system and installed packages.\n"
-    #         echo -e "    Usage: ${GREEN}rpi-update${RESET}"
-    #         ;;
-    #     "rpi-configure")
-    #         echo -e "    Configure the Raspberry Pi settings.\n"
-    #         echo -e "    Usage: ${GREEN}rpi-configure${RESET}"
-    #         ;;
-    #     "rpi-start")
-    #         echo -e "    Start the Raspberry Pi.\n"
-    #         echo -e "    Usage: ${GREEN}rpi-start${RESET}"
-    #         ;;
-    #     "rpi-stop")
-    #         echo -e "    Stop the Raspberry Pi.\n"
-    #         echo -e "    Usage: ${GREEN}rpi-stop${RESET}"
-    #         ;;
-    #     "rpi-restart")
-    #         echo -e "    Restart the Raspberry Pi.\n"
-    #         echo -e "    Usage: ${GREEN}rpi-restart${RESET}"
-    #         ;;
-    #     "rpi-shutdown")
-    #         echo -e "    Shutdown the Raspberry Pi.\n"
-    #         echo -e "    Usage: ${GREEN}rpi-shutdown${RESET}"
-    #         ;;
-    #     "rpi-reboot")
-    #         echo -e "    Reboot the Raspberry Pi.\n"
-    #         echo -e "    Usage: ${GREEN}rpi-reboot${RESET}"
-    #         ;;
-    #     *)
-    #         echo -e "  ${RED}No help text available.${RESET}"
-    #         ;;
-    #     esac
-    #     echo ""
-    # done
