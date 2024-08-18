@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#============ Colors ============
+# ============ Colors ============
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -10,7 +10,11 @@ RESET='\033[0m'
 
 # ===============================
 
-#============ Tools =============
+# ========== Variables ==========
+global_user=$(whoami)
+# ===============================
+
+# ============ Tools ============
 
 # Displays the title banner.
 function display-banner () {
@@ -28,9 +32,9 @@ echo -e "       |_|                                 |_|                         
 
 # Gets the username and hostname from the host.json file.
 function gethost() {
-    if [ -f host.json ]; then
-        username=$(jq -r '.username' host.json)
-        hostname=$(jq -r '.hostname' host.json)
+    if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
+        username=$(jq -r '.username' $RPI_SETUP_WIZARD_PATH/src/host.json)
+        hostname=$(jq -r '.hostname' $RPI_SETUP_WIZARD_PATH/src/host.json)
         echo "$username"
         echo "$hostname"
     else
@@ -45,122 +49,178 @@ function error {
   return 1
 }
 
-# ===============================
+function show-link() {
+    if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
+        username=$(gethost | head -n 1)
+        hostname=$(gethost | tail -n 1)
+        echo -e "Linked to user: $username, host: $hostname\n"
+    fi
+}
 
-#============ Functions =========
+# ==============================
+
+# ========== Functions =========
 
 # Raspberry Pi Wizard function.
 function rpi() {
+
+    # Adds the Raspberry Pi Wizard to the shell "path".
+    function init() {
+        declare -g project_path=$(pwd)
+        script_path=$project_path/src/rpi-wizard.sh
+
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            echo -e "\n# Raspberry Pi Wizard executable" >> ~/.zshrc || error "Failed to append to .zshrc file." || return 1
+            echo -e "source $script_path" >> ~/.zshrc
+            echo -e "export RPI_SETUP_WIZARD_PATH=$project_path \n" >> ~/.zshrc
+
+            echo "Added the following line to your .zshrc file:"
+            echo -e "source $script_path \n"
+            echo -e "Restart your terminal to use the 'rpi' command globally.\n"
+        else
+            echo "Consider adding the following line to your .bashrc/.zshrc/your config file:"
+            echo "source $script_path"
+        fi
+
+        echo "Ensure that the path ends with '.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'"
+    }
+
+    # Stores the username and hostname in a JSON file.
+    function link() {
+        usr=$1
+        host=$2
+
+        storage="{
+ \"username\": \"$usr\",
+ \"hostname\": \"$host\"
+}"
+
+        echo "$storage" > $RPI_SETUP_WIZARD_PATH/src/host.json || error "Failed to create the host.json file." || return 1
+    }
+
+    # Removes the host.json file.
+    function unlink() {
+        if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
+            rm $RPI_SETUP_WIZARD_PATH/src/host.json
+        else
+            echo "Failed to remove the config file."
+        fi
+    }
+
+    # Adds an SSH key to the Raspberry Pi.
+    function add-ssh() {
+        usr=$(<(gethost) head -n 1)
+        if [ $? -ne 0 ]; then
+            error "Failed to get the username and hostname." || return 1
+        fi
+        host=$(<(gethost) tail -n 1)
+        
+    	echo -e "Creating SSH key \n"
+        ssh-keygen -f /Users/$global_user/.ssh/$host -C "$host" -N "$1"
+
+    	echo "Copying SSH key to $host, you will need to enter the password for $usr\n"
+    	sleep 2
+        ssh-copy-id -o StrictHostKeyChecking=no -i /Users/$global_user/.ssh/$host.pub $usr@$host.local
+
+    	echo "Adding $host to ~/.ssh/config\n"
+        tempfile=$(mktemp)
+        cat <<EOF > "$tempfile"
+Host $host
+  HostName $host.local
+  User $usr
+  IdentityFile ~/.ssh/$host
+EOF
+        cat ~/.ssh/config >> "$tempfile"
+        mv "$tempfile" ~/.ssh/config
+
+    	echo "Testing SSH connection to $host, consider exiting to pursue configuration\n"
+        ssh $host
+    }
+
+
     case $# in
-        0)
-            display-banner
+    0)
+        display-banner
 
-            echo "Usage: rpi [init|link|unlink] ..."
-            ;;
-        1)
-            case $1 in
-                init)
-                    init || error "Failed to initialize the Raspberry Pi Wizard."
-                    ;;
-                link)
-                    echo "Usage: rpi link <config_file>"
-                    ;;
-                unlink)
-                    unlink
-                    ;;
-                *)
-                    echo "Unknown command: $1"
-                    ;;
-            esac
-            ;;
-        *)
-            case $1 in
-                link)
-                    link $2
-                    ;;
-                unlink)
-                    unlink
-                    ;;
-                *)
-                    echo "Unknown command: $1"
-                    ;;
-            esac
-            ;;
-    esac
+        echo "Open source Raspberry Pi wizard tool."
+        echo "Licensed under the MIT License, Yann M. Vidamment © 2024."
+        echo "https://github.com/MorganKryze/RaspberryPi-Setup-Wizard/"
+        sleep 0.5
+        echo -e "\n=============================================================================\n"
+        sleep 0.5
+        show-link
+
+        echo "Usage: rpi [init|link|unlink|ssh] ..."
+        ;;
+    1)
+        case $1 in
+            init)
+                init
+                ;;
+            link)
+                echo "Usage: rpi link <username> <hostname>"
+                ;;
+            unlink)
+                unlink
+                ;;
+            ssh)
+                add-ssh
+                ;;
+            *)
+                echo "Unknown command: $1"
+                ;;
+        esac
+        ;;
+    2)
+        case $1 in
+            init)
+                echo "Usage: rpi init"
+                ;;
+            link)
+                echo "Usage: rpi link <username> <hostname>"
+                ;;
+            unlink)
+                echo "Usage: rpi unlink"
+                ;;
+            ssh)
+                add-ssh $2
+                ;;
+            *)
+                echo "Unknown command: $1"
+                ;;
+        esac
+        ;;
+    *)
+        case $1 in
+            init)
+                echo "Usage: rpi init"
+                ;;
+            link)
+                if [ $# -eq 3 ]; then
+                    link $2 $3
+                else
+                    echo "Usage: rpi link <username> <hostname>"
+                fi
+                ;;
+            unlink)
+                unlink
+                ;;
+            ssh)
+                echo "Usage: rpi ssh [passphrase]"
+                ;;
+            *)
+                echo "Unknown command: $1"
+                ;;
+        esac
+        ;;
+    esac    
 }
 
-function init() {
-    script_path=$(pwd)/src/rpi-wizard.sh
 
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "# Raspberry Pi Wizard executable" >> ~/.zshrc || error "Failed to append to .zshrc file."
-        echo "source $script_path" >> ~/.zshrc
-
-        echo "Added the following line to your .zshrc file:"
-        echo -e "source $script_path \n"
-        echo "You can now use the 'rpi' command globally."
-
-        exec ${SHELL} -l || error "Failed to reload the shell."
-    else
-        echo "Consider adding the following line to your .bashrc/.zshrc/your config file:"
-        echo "source $script_path"
-    fi
-
-    echo "Ensure that the path ends with '.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'"
-}
-
-function link() {
-    if [ "$#" -ne 2 ]; then
-        echo "Usage: rpi link <username> <hostname>"
-        return 1
-    fi
-
-    usr=$1
-    host=$2
-
-    storage="{
-     \"username\": \"$usr\",
-     \"hostname\": \"$host\"
-    }"
-
-    echo "$storage" > host.json || error "Failed to create the host.json file."
-}
-
-function unlink() {
-    if [ -f host.json ]; then
-        rm host.json || error "Failed to remove the host.json file."
-    else
-        echo "No link found."
-    fi
-}
 
 # ===============================
 
 
-
-# function check_internet() {
-#   printf "Checking if you are online..."
-#   wget -q --spider http://github.com
-#   if [ $? -eq 0 ]; then
-#     echo "Online. Continuing."
-#   else
-#     error "Offline. Go connect to the internet then run the script again."
-#   fi
-# }
-
-# check_internet
-
-# curl -sSL https://get.docker.com | sh || error "Failed to install Docker."
-
-
-# display-banner
-
-#     echo "Open source Raspberry Pi wizard tool."
-#     echo "Licensed under the MIT License, Yann M. Vidamment © 2024."
-#     echo "https://github.com/MorganKryze/RaspberryPi-Setup-Wizard/"
-#     sleep 0.5
-#     echo -e "\n=============================================================================\n"
-#     sleep 0.5
 
 # echo -e "Available functions:\n"
     # for func in rpi-install rpi-uninstall rpi-update rpi-configure rpi-start rpi-stop rpi-restart rpi-shutdown rpi-reboot; do
