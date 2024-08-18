@@ -90,16 +90,16 @@ function show-link() {
 
 # ========== Functions =========
 
-# Raspberry Pi Wizard function.
+# Raspberry Pi Wizard main function.
 function rpi() {
 
     function help() {
         display-banner
 
-        echo "Open source Raspberry Pi wizard tool."
+        echo "Open-source Raspberry Pi wizard tool."
         echo "Licensed under the MIT License, Yann M. Vidamment © 2024."
         echo "https://github.com/MorganKryze/RaspberryPi-Setup-Wizard/"
-        sleep 1
+        sleep 1.5
         echo -e "\n=============================================================================\n"
         sleep 0.5
         show-link
@@ -173,6 +173,8 @@ function rpi() {
 }
 
     # Stores the username and hostname in a JSON file.
+    # $1: The username of the Raspberry Pi.
+    # $2: The hostname of the Raspberry Pi.
     function link() {
         description link "stores the username and hostname of the current used RPi in a JSON file."
         usr=$1
@@ -201,6 +203,7 @@ function rpi() {
     }
 
     # Adds an SSH key to the Raspberry Pi.
+    # $1: The passphrase for the SSH key.
     function add-ssh() {
         description ssh "adds an SSH key to the Raspberry Pi for passwordless login."
 
