@@ -29,14 +29,26 @@ function green() {
 # Displays an error message when a command fails.
 # $1: The error message to display.
 function error {
-  echo -e "${RED}[error]${RESET} $1"
+  echo -e "${RED}[ ERROR ]${RESET} $1"
   return 1
 }
 
 # Displays an information message.
 # $1: The message to display.
 function info {
-  echo "${BLUE}[info]${RESET} $1"
+  echo "${BLUE}[ INFO ]${RESET} $1"
+}
+
+# Displays a warning message.
+# $1: The message to display.
+function warning {
+  echo "${ORANGE}[ WARNING ]${RESET} $1"
+}
+
+# Displays a success message.
+# $1: The message to display.
+function success {
+  echo "${GREEN}[ SUCCESS ]${RESET} $1"
 }
 
 # Displays a description of a function.
@@ -49,6 +61,11 @@ function description () {
 
 # ========== Variables ==========
 global_user=$(whoami)
+ALIASES_PATH="https://raw.githubusercontent.com/MorganKryze/.dotfiles/main/rpi_shell/.aliases"
+ZSHENV_PATH="https://raw.githubusercontent.com/MorganKryze/.dotfiles/main/rpi_shell/.zshenv"
+
+username=""
+hostname=""
 # ===============================
 
 # ============ Tools ============
@@ -66,12 +83,15 @@ blue "       |_|                                 |_|                            
 }
 
 # Gets the username and hostname from the host.json file.
-function gethost() {
+function get-host-info() {
     if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
-        username=$(jq -r '.username' $RPI_SETUP_WIZARD_PATH/src/host.json)
-        hostname=$(jq -r '.hostname' $RPI_SETUP_WIZARD_PATH/src/host.json)
-        txt "$username"
-        txt "$hostname"
+        user=$(jq -r '.username' $RPI_SETUP_WIZARD_PATH/src/host.json | tr -d '"')
+        user=$(printf "%s" "$user")
+        declare -g username=$user
+
+        host=$(jq -r '.hostname' $RPI_SETUP_WIZARD_PATH/src/host.json | tr -d '"')
+        host=$(printf "%s" "$host")
+        declare -g hostname=$host
     else
         # No file found.
         return 1
@@ -81,9 +101,10 @@ function gethost() {
 # Displays the linked username and hostname.
 function show-link() {
     if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
-        username=$(gethost | head -n 1)
-        hostname=$(gethost | tail -n 1)
-        txt "Linked to user: $username, host: $hostname\n"
+        get-host-info
+        info "Linked to user: ${ORANGE}$username${RESET}, host: ${ORANGE}$hostname${RESET}.\n"
+    else 
+        warning "No host.json file found. Consider running 'rpi link <username> <hostname>'.\n"
     fi
 }
 # ==============================
@@ -106,17 +127,19 @@ function rpi() {
 
         info "Available commands:\n"
 
-        for func in help init link unlink ssh; do
+        for func in help init link unlink ssh env; do
             blue "  $func:"
             case "$func" in
             "help")
                 green "    Display the help text for each command.\n"
                 echo -e "    Usage: ${BLUE}rpi help${RESET}"
                 ;;
+
             "init")
                 green "    Add the Raspberry Pi Wizard to the shell path.\n"
                 echo -e "    Usage: ${BLUE}rpi init${RESET}"
                 ;;
+
             "link")
                 green "    Link the Raspberry Pi to a username and hostname.\n"
                 echo -e "    Usage: ${BLUE}rpi link${RESET} ${RED}<username> <hostname>${RESET}"
@@ -133,6 +156,11 @@ function rpi() {
                 green "    Add an SSH key to the Raspberry Pi.\n"
                 echo -e "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET}"
                 echo -e "      ${ORANGE}passphrase:${RESET} The passphrase for the SSH key."
+                ;;
+            
+            "env")
+                green "    Set up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases.\n"
+                echo -e "    Usage: ${BLUE}rpi env${RESET}"
                 ;;
 
             *)
@@ -169,7 +197,7 @@ function rpi() {
             echo -e "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET} \n"
         fi
 
-        info "Ensure that the first path ends with ${ORANGE}'.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'${RESET}"
+        success "Ensure that the first path ends with ${ORANGE}'.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'${RESET}"
 }
 
     # Stores the username and hostname in a JSON file.
@@ -186,7 +214,7 @@ function rpi() {
 }"
 
         echo "$storage" > $RPI_SETUP_WIZARD_PATH/src/host.json || error "Failed to create the host.json file." || return 1
-        info "Successfully linked to user: $usr, host: $host"
+        success "Currently linked to user: $usr, host: $host"
     }
 
     # Removes the host.json file.
@@ -196,10 +224,10 @@ function rpi() {
         if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
             rm $RPI_SETUP_WIZARD_PATH/src/host.json
         else
-            error "No host.json file found. Consider running 'rpi link <username> <hostname>' beforehand." || return 1
+            error "No host.json file found. Consider running 'rpi link <username> <hostname>' first." || return 1
         fi
 
-        info "Successfully unlinked the Raspberry Pi."
+        success "Unlinked the Raspberry Pi."
     }
 
     # Adds an SSH key to the Raspberry Pi.
@@ -208,31 +236,111 @@ function rpi() {
         description ssh "adds an SSH key to the Raspberry Pi for passwordless login."
 
         info "Getting the username and hostname from the host.json file.\n"
-        usr=$(gethost | head -n 1)
-        if [ $? -ne 0 ]; then
-            error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>'." || return 1
-        fi
-        host=$(gethost | tail -n 1)
+        get-host-info || error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>' first." || return 1
+        
+        show-link
         
     	info "Creating new SSH key \n"
-        ssh-keygen -f /Users/$global_user/.ssh/$host -C "$host" -N "$1"
+        ssh-keygen -f /Users/$global_user/.ssh/$hostname -C "$hostname" -N "$1"
 
-    	info "Copying SSH key to $host, you will need to enter the password for $usr\n"
+    	info "Copying SSH key to $hostname, you will need to enter the password for $usr\n"
     	sleep 2
-        ssh-copy-id -o StrictHostKeyChecking=no -i /Users/$global_user/.ssh/$host.pub $usr@$host.local
+        ssh-copy-id -o StrictHostKeyChecking=no -i /Users/$global_user/.ssh/$hostname.pub $usr@$hostname.local
 
-    	info "Adding $host to ~/.ssh/config\n"
+    	info "Adding $hostname to ~/.ssh/config\n"
         tempfile=$(mktemp)
         cat <<EOF > "$tempfile"
-Host $host
-  HostName $host.local
+Host $hostname
+  HostName $hostname.local
   User $usr
-  IdentityFile ~/.ssh/$host
+  IdentityFile ~/.ssh/$hostname
+
 EOF
         cat ~/.ssh/config >> "$tempfile"
         mv "$tempfile" ~/.ssh/config
 
-    	info "You can now SSH into $host with 'ssh $host'\n"
+    	success "You can now SSH into $hostname with 'ssh $hostname'\n"
+    }
+
+    # Sets up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases.
+    function env() {
+        description env "sets up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases."
+
+        info "Getting the username and hostname from the host.json file.\n"
+        get-host-info || error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>' first." || return 1
+        
+        show-link
+
+	    info "Updating and Upgrading packages\n"
+	    ssh $hostname "sudo apt-get update && sudo apt-get upgrade -y" || error "Failed to connect to $host. Consider running 'rpi ssh' first." || return 1
+
+	    info "Installing ZSH\n"
+	    if ! ssh $hostname "command -v zsh >/dev/null 2>&1"; then
+	    	ssh $hostname "sudo apt-get install zsh -y"
+	    	ssh $hostname "chsh -s $(which zsh)"
+        else 
+            warning "ZSH is already installed. Skipping..."
+	    fi
+
+	    info "Installing Git\n"
+	    if ! ssh $hostname "command -v git >/dev/null 2>&1"; then
+	    	ssh $hostname "sudo apt-get install git -y"
+        else 
+            warning "Git is already installed. Skipping..."
+	    fi
+
+	    info "Installing Oh My Zsh\n"
+	    if ssh $hostname "[ ! -d \"~/.oh-my-zsh\" ]"; then
+	    	ssh $hostname "sh -c $(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+	    	ssh $hostname "sed -i '/ZSH_THEME=/d' ~/.zshrc && sed -i '1iZSH_THEME=\"candy\"' ~/.zshrc"
+
+	    	ssh $hostname "sudo chown -R 1000:1000 ~/.oh-my-zsh"
+	    	ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-autosuggestions /home/$1/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+	    	ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /home/$1/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+
+	    	ssh $hostname "sed -i '/plugins=(git)/d' ~/.zshrc && sed -i '1iplugins=(git zsh-autosuggestions zsh-syntax-highlighting)' ~/.zshrc"
+        else 
+            warning "Oh My Zsh is already installed. Skipping..."
+	    fi
+
+	    info "InstaNeofetch\n"
+	    if ! ssh $hostname "command -v neofetch >/dev/null 2>&1"; then
+	    	ssh $hostname "sudo apt-get install neofetch -y"
+	    	ssh $hostname "echo neofetch >> ~/.zshrc"
+        else 
+            warning "Neofetch is already installed. Skipping..."
+	    fi
+
+	    info "Installing lsd\n"
+	    if ! ssh $hostname "command -v lsd >/dev/null 2>&1"; then
+	    	ssh $hostname "sudo apt-get install lsd -y"
+        else 
+            warning "lsd is already installed. Skipping..."
+	    fi
+
+        info "Adding aliases and .zshenv\n"
+        if ! ssh $hostname "test -f ~/.aliases"; then
+            ssh $hostname "curl -O $ALIASES_PATH > ~/.aliases"
+        else 
+            warning "Aliases file already exists. Skipping..."
+        fi
+        if ! ssh $hostname "test -f ~/.zshenv"; then
+            ssh $hostname "curl -O $ZSHENV_PATH > ~/.zshenv"
+        else
+            warning ".zshenv file already exists. Skipping..."
+        fi
+
+	    info "Removing 'NO WARRANTY' welcome message.\n"
+	    ssh $hostname "touch ~/.hushlogin"
+
+	    warning "Rebooting in 5 sec, please wait a few moments.\n"
+	    sleep 5
+	    ssh $hostname "sudo reboot"
+
+	    info "Rebooting...\n"
+	    sleep 45
+
+	    success "$hostname is now ready to use.\n"
     }
 
 
@@ -242,6 +350,9 @@ EOF
         ;;
     1)
         case $1 in
+            help)
+                help
+                ;;
             init)
                 init
                 ;;
@@ -254,8 +365,8 @@ EOF
             ssh)
                 add-ssh
                 ;;
-            help)
-                help
+            env)
+                env
                 ;;
             *)
                 error "Unknown command: $1"
@@ -264,6 +375,9 @@ EOF
         ;;
     2)
         case $1 in
+            help)
+                info "Usage: rpi help"
+                ;;
             init)
                 info "Usage: rpi init"
                 ;;
@@ -276,8 +390,8 @@ EOF
             ssh)
                 add-ssh $2
                 ;;
-            help)
-                info "Usage: rpi help"
+            env)
+                info "Usage: rpi env"
                 ;;
             *)
                 error "Unknown command: $1"
@@ -286,6 +400,9 @@ EOF
         ;;
     *)
         case $1 in
+            help)
+                info "Usage: rpi help"
+                ;;
             init)
                 info "Usage: rpi init"
                 ;;
@@ -302,8 +419,8 @@ EOF
             ssh)
                 info "Usage: rpi ssh [passphrase]"
                 ;;
-            help)
-                info "Usage: rpi help"
+            env)
+                env
                 ;;
             *)
                 error "Unknown command: $1"
