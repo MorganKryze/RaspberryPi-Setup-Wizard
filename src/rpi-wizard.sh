@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# ============ Colors ============
-
+# ================================== COLORS ===================================
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
@@ -58,9 +57,9 @@ function description () {
     info "${GREEN}The ${BLUE}$1${GREEN} function $2 ${RESET}\n"
     sleep 2
 }
-# ===============================
+# =============================================================================
 
-# ========== Variables ==========
+# ============================== VARIABLES ====================================
 global_user=$(whoami)
 ALIASES_PATH="https://raw.githubusercontent.com/MorganKryze/.dotfiles/main/rpi_shell/.aliases"
 ZSHENV_PATH="https://raw.githubusercontent.com/MorganKryze/.dotfiles/main/rpi_shell/.zshenv"
@@ -68,9 +67,9 @@ ZSHENV_PATH="https://raw.githubusercontent.com/MorganKryze/.dotfiles/main/rpi_sh
 username=""
 hostname=""
 ip_address=""
-# ===============================
+# =============================================================================
 
-# ============ Tools ============
+# ================================ TOOLS ======================================
 
 # Displays the title banner.
 function display-banner () {
@@ -116,9 +115,9 @@ function show-link() {
         warning "No host.json file found. Consider running 'rpi link <username> <hostname>'.\n"
     fi
 }
-# ==============================
+# =============================================================================
 
-# ========== Functions =========
+# =============================== Functions ===================================
 
 # Raspberry Pi Wizard main function.
 function rpi() {
@@ -176,6 +175,12 @@ function rpi() {
                 green "    Set up Docker on the Raspberry Pi.\n"
                 txt "    Usage: ${BLUE}rpi docker${RESET} ${ORANGE}[--portainer|-p]${RESET}"
                 txt "      ${ORANGE}--portainer, -p:${RESET} Install Portainer alongside docker to manage containers."
+                ;;
+
+            "git")
+                green "    Configure git on the Raspberry Pi to a specific account.\n"
+                txt "    Usage: ${BLUE}rpi git${RESET} ${RED}<email>${RESET}"
+                txt "      ${RED}email:${RESET} The email for the git configuration."
                 ;;
 
             *)
@@ -441,6 +446,46 @@ EOF
 	    fi
     }
 
+    # Configures git on the Raspberry Pi to a specific account.
+    # $1: The email for the git configuration.
+    function setup-git() {
+        description git "configures git on the Raspberry Pi to a specific account."
+
+        info "Getting the username and hostname from the host.json file.\n"
+        get-host-info || error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>' first." || return 1
+
+        show-link
+
+    	info "Generating SSH key pair for $hostname\n"
+    	ssh $hostname "ssh-keygen -t ed25519 -C "$1" -f ~/.ssh/id_ed25519" || error "Failed to generate SSH key pair" || return 1
+
+    	info "Starting the ssh-agent in the background\n"
+    	ssh $hostname "eval "$(ssh-agent -s)"" || error "Failed to start the ssh-agent in the background" || return 1
+
+    	info "Adding hithub as known hosts for ssh\n"
+    	ssh $hostname "echo "Host github.com
+      IgnoreUnknown UseKeychain
+      AddKeysToAgent yes
+      UseKeychain yes
+      IdentityFile ~/.ssh/id_ed25519" > ~/.ssh/config" || error "Failed to add github as known hosts for ssh" || return 1
+
+    	info "Adding your SSH private key to the ssh-agent\n"
+    	ssh $hostname "ssh-add ~/.ssh/id_ed25519" || error "Failed to add your SSH private key to the ssh-agent" || return 1
+
+    	info "Go to https://github.com/settings/keys and add the following SSH public key:\n"
+    	ssh $hostname "cat ~/.ssh/id_ed25519.pub" || error "Failed to display the SSH public key" || return 1
+
+        info "Setting up username and email\n"
+    	ssh $hostname "git config --global user.name $username" || error "Failed to set up username" || return 1
+    	ssh $hostname "git config --global user.email $1" || error "Failed to set up email" || return 1
+    
+    	success "Git is now set up on $hostname\n"
+    }
+
+    function security() {
+
+    }
+
 
     case $# in
     0)
@@ -468,6 +513,9 @@ EOF
                 ;;
             docker)
                 docker
+                ;;
+            git)
+                info "Usage: rpi git <email>"
                 ;;
             *)
                 error "Unknown command: $1"
@@ -501,6 +549,9 @@ EOF
                     error "Unknown option: $2"
                 fi
                 ;;
+            git)
+                setup-git $2
+                ;;
             *)
                 error "Unknown command: $1"
                 ;;
@@ -533,6 +584,9 @@ EOF
             docker)
                 info "Usage: rpi docker [--portainer|-p]"
                 ;;
+            git)
+                info "Usage: rpi git <email>"
+                ;;
             *)
                 error "Unknown command: $1"
                 ;;
@@ -540,4 +594,4 @@ EOF
         ;;
     esac    
 }
-# ===============================
+# =============================================================================
