@@ -17,19 +17,19 @@ function txt() {
 # Displays a blue message.
 # $1: The message to display.
 function blue() {
-    echo -e "${BLUE}$1${RESET}"
+    txt "${BLUE}$1${RESET}"
 }
 
 # Displays a green message.
 # $1: The message to display.
 function green() {
-    echo -e "${GREEN}$1${RESET}"
+    txt "${GREEN}$1${RESET}"
 }
 
 # Displays an error message when a command fails.
 # $1: The error message to display.
 function error {
-  echo -e "${RED}[ ERROR ]${RESET} $1"
+  txt "${RED}[ ERROR ]${RESET} $1"
   return 1
 }
 
@@ -72,7 +72,7 @@ hostname=""
 
 # Displays the title banner.
 function display-banner () {
-blue "______         _   _____        _                   _    _  _                        _    "
+blue " _____         _   _____        _                   _    _  _                        _    "
 blue "| ___ \       (_) /  ___|      | |                 | |  | |(_)                      | |   "
 blue "| |_/ / _ __   _  \ \`--.   ___ | |_  _   _  _ __   | |  | | _  ____  __ _  _ __   __| |  "
 blue "|    / | '_ \ | |  \`--. \ / _ \| __|| | | || '_ \  | |/\| || ||_  / / _\` || '__| / _\` |"
@@ -121,7 +121,7 @@ function rpi() {
         echo "Licensed under the MIT License, Yann M. Vidamment © 2024."
         echo "https://github.com/MorganKryze/RaspberryPi-Setup-Wizard/"
         sleep 1.5
-        echo -e "\n=============================================================================\n"
+        txt "\n=============================================================================\n"
         sleep 0.5
         show-link
 
@@ -132,42 +132,48 @@ function rpi() {
             case "$func" in
             "help")
                 green "    Display the help text for each command.\n"
-                echo -e "    Usage: ${BLUE}rpi help${RESET}"
+                txt "    Usage: ${BLUE}rpi help${RESET}"
                 ;;
 
             "init")
                 green "    Add the Raspberry Pi Wizard to the shell path.\n"
-                echo -e "    Usage: ${BLUE}rpi init${RESET}"
+                txt "    Usage: ${BLUE}rpi init${RESET}"
                 ;;
 
             "link")
                 green "    Link the Raspberry Pi to a username and hostname.\n"
-                echo -e "    Usage: ${BLUE}rpi link${RESET} ${RED}<username> <hostname>${RESET}"
-                echo -e "      ${RED}username:${RESET} The username of the Raspberry Pi."
-                echo -e "      ${RED}hostname:${RESET} The hostname of the Raspberry Pi."
+                txt "    Usage: ${BLUE}rpi link${RESET} ${RED}<username> <hostname>${RESET}"
+                txt "      ${RED}username:${RESET} The username of the Raspberry Pi."
+                txt "      ${RED}hostname:${RESET} The hostname of the Raspberry Pi."
                 ;;
 
             "unlink")
                 green "    Unlink the Raspberry Pi from a username and hostname.\n"
-                echo -e "    Usage: ${BLUE}rpi unlink${RESET}"
+                txt "    Usage: ${BLUE}rpi unlink${RESET}"
                 ;;
 
             "ssh")
                 green "    Add an SSH key to the Raspberry Pi.\n"
-                echo -e "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET}"
-                echo -e "      ${ORANGE}passphrase:${RESET} The passphrase for the SSH key."
+                txt "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET}"
+                txt "      ${ORANGE}passphrase:${RESET} The passphrase for the SSH key."
                 ;;
             
             "env")
                 green "    Set up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases.\n"
-                echo -e "    Usage: ${BLUE}rpi env${RESET}"
+                txt "    Usage: ${BLUE}rpi env${RESET}"
+                ;;
+            
+            "docker")
+                green "    Set up Docker on the Raspberry Pi.\n"
+                txt "    Usage: ${BLUE}rpi docker${RESET} ${ORANGE}[--portainer|-p]${RESET}"
+                txt "      ${ORANGE}--portainer, -p:${RESET} Install Portainer alongside docker to manage containers."
                 ;;
 
             *)
                 error "  No help text available."
                 ;;
             esac
-            echo ""
+            txt ""
             sleep 0.2
         done
     }
@@ -192,9 +198,9 @@ function rpi() {
             info "Restart your terminal to use the 'rpi' command globally.\n"
         else
             info "Consider adding the following lines to your .bashrc/.zshrc/your config file:"
-            echo -e "# Raspberry Pi Wizard executable"
-            echo -e "source ${ORANGE}$script_path${RESET}"
-            echo -e "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET} \n"
+            txt "# Raspberry Pi Wizard executable"
+            txt "source ${ORANGE}$script_path${RESET}"
+            txt "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET} \n"
         fi
 
         success "Ensure that the first path ends with ${ORANGE}'.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'${RESET}"
@@ -280,6 +286,7 @@ EOF
 	    	ssh $hostname "chsh -s $(which zsh)"
         else 
             warning "ZSH is already installed. Skipping..."
+            ssh $hostname "zsh --version"
 	    fi
 
 	    info "Installing Git\n"
@@ -287,6 +294,7 @@ EOF
 	    	ssh $hostname "sudo apt-get install git -y"
         else 
             warning "Git is already installed. Skipping..."
+            ssh $hostname "git --version"
 	    fi
 
 	    info "Installing Oh My Zsh\n"
@@ -301,6 +309,7 @@ EOF
 	    	ssh $hostname "sed -i '/plugins=(git)/d' ~/.zshrc && sed -i '1iplugins=(git zsh-autosuggestions zsh-syntax-highlighting)' ~/.zshrc"
         else 
             warning "Oh My Zsh is already installed. Skipping..."
+            ssh $hostname "omz version"
 	    fi
 
 	    info "InstaNeofetch\n"
@@ -309,6 +318,7 @@ EOF
 	    	ssh $hostname "echo neofetch >> ~/.zshrc"
         else 
             warning "Neofetch is already installed. Skipping..."
+            ssh $hostname "neofetch --version"
 	    fi
 
 	    info "Installing lsd\n"
@@ -316,6 +326,7 @@ EOF
 	    	ssh $hostname "sudo apt-get install lsd -y"
         else 
             warning "lsd is already installed. Skipping..."
+            ssh $hostname "lsd --version"
 	    fi
 
         info "Adding aliases and .zshenv\n"
@@ -343,6 +354,77 @@ EOF
 	    success "$hostname is now ready to use.\n"
     }
 
+    # Sets up Docker on the Raspberry Pi.
+    # $1: Install Portainer.
+    function docker() {
+        description docker "sets up Docker on the Raspberry Pi."
+
+        info "Getting the username and hostname from the host.json file.\n"
+        get-host-info || error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>' first." || return 1
+        
+        show-link
+
+	    PORTAINER=false
+        if [[ "$1" == "--portainer" || "$1" == "-p" ]]; then
+            PORTAINER=true
+        fi
+
+        info "Checking if Docker is installed\n"
+        if ! ssh $hostname "command -v docker >/dev/null 2>&1"; then
+            ssh $hostname "curl -fsSL https://get.docker.com | sh" || error "Failed to install Docker on $hostname" || return 1
+        else
+            warning "Docker is already installed\n"
+            ssh $hostname "docker --version" || error "Failed to get Docker version" || return 1
+        fi
+
+	    info "Adding $username to the Docker group\n"
+	    if ! ssh $hostname "groups $username | grep -q docker"; then
+	    	ssh $hostname "sudo usermod -aG docker $username" || error "Failed to add $username to the Docker group" || return 1
+        else
+            warning "$username is already in the Docker group, current groups:\n"
+            ssh $hostname "groups $username" || error "Failed to get $username groups" || return 1
+	    fi
+
+	    info "Installing lazydocker\n"
+        if ! ssh $hostname "command -v lazydocker >/dev/null 2>&1"; then
+            ssh $hostname "curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | zsh" || error "Failed to install lazydocker on $hostname" || return 1
+            ssh $hostname "sudo ln -s /home/$username/.local/bin/lazydocker /usr/bin/" || error "Failed to create symlink for lazydocker" || return 1
+        else
+            warning "lazydocker is already installed\n"
+            ssh $hostname "lazydocker --version" || error "Failed to get lazydocker version" || return 1
+        fi
+
+	    warning "Rebooting in 5 sec, please wait a few moments.\n"
+	    sleep 5
+
+	    ssh $hostname "sudo reboot" || error "Failed to reboot $hostname" || return 1
+
+	    info "Waiting for $hostname to reboot.\n"
+	    sleep 45
+
+	    success "Docker is now set up on $hostname\n"
+
+        if [ "$PORTAINER" = false ]; then
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                read -r response"?Do you want to install Portainer to manage your containers? (y/N):"
+            else
+                read -p "Do you want to install Portainer to manage your containers? (y/N):" response
+            fi
+
+            if [[ "$response" =~ ^([yY])$ ]]; then
+                PORTAINER=true
+            fi
+        fi
+    
+	    if [ "$PORTAINER" = true ]; then
+            info "Installing Portainer on $hostname...\n"
+            ssh $hostname "sudo docker volume create portainer_data"
+            ssh $hostname "sudo docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce"
+    
+	    	success "Portainer is now running on at http://localhost:9000 \n"
+	    fi
+    }
+
 
     case $# in
     0)
@@ -368,6 +450,9 @@ EOF
             env)
                 env
                 ;;
+            docker)
+                docker
+                ;;
             *)
                 error "Unknown command: $1"
                 ;;
@@ -392,6 +477,13 @@ EOF
                 ;;
             env)
                 info "Usage: rpi env"
+                ;;
+            docker)
+                if [[ "$2" == "--portainer" || "$2" == "-p" ]]; then
+                    docker $2
+                else 
+                    error "Unknown option: $2"
+                fi
                 ;;
             *)
                 error "Unknown command: $1"
@@ -421,6 +513,9 @@ EOF
                 ;;
             env)
                 env
+                ;;
+            docker)
+                info "Usage: rpi docker [--portainer|-p]"
                 ;;
             *)
                 error "Unknown command: $1"
