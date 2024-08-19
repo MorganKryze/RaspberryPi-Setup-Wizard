@@ -295,8 +295,8 @@ EOF
 	    	ssh $hostname "sed -i '/ZSH_THEME=/d' ~/.zshrc && sed -i '1iZSH_THEME=\"candy\"' ~/.zshrc"
 
 	    	ssh $hostname "sudo chown -R 1000:1000 ~/.oh-my-zsh"
-	    	ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-autosuggestions /home/$1/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
-	    	ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /home/$1/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+	    	ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-autosuggestions /home/$username/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+	    	ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /home/$username/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
 
 	    	ssh $hostname "sed -i '/plugins=(git)/d' ~/.zshrc && sed -i '1iplugins=(git zsh-autosuggestions zsh-syntax-highlighting)' ~/.zshrc"
         else 
