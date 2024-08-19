@@ -7,6 +7,7 @@ BLUE='\033[0;34m'
 RED='\033[0;31m'
 ORANGE='\033[0;33m'
 RESET='\033[0m'
+LINK='\033[0;36m'
 
 # Displays a raw message.
 # $1: The message to display.
@@ -66,6 +67,7 @@ ZSHENV_PATH="https://raw.githubusercontent.com/MorganKryze/.dotfiles/main/rpi_sh
 
 username=""
 hostname=""
+ip_address=""
 # ===============================
 
 # ============ Tools ============
@@ -92,6 +94,13 @@ function get-host-info() {
         host=$(jq -r '.hostname' $RPI_SETUP_WIZARD_PATH/src/host.json | tr -d '"')
         host=$(printf "%s" "$host")
         declare -g hostname=$host
+
+        ip=$(ssh $host "hostname -I" | awk '{print $1}')
+        ip=$(printf "%s" "$ip")
+        if [ -z "$ip" ]; then
+            ip="None"
+        fi
+        declare -g ip_address=$ip
     else
         # No file found.
         return 1
@@ -102,7 +111,7 @@ function get-host-info() {
 function show-link() {
     if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
         get-host-info
-        info "Linked to user: ${ORANGE}$username${RESET}, host: ${ORANGE}$hostname${RESET}.\n"
+        info "Linked to user: ${ORANGE}$username${RESET}, host: ${ORANGE}$hostname${RESET} at IP: ${ORANGE}$ip_address${RESET}\n"
     else 
         warning "No host.json file found. Consider running 'rpi link <username> <hostname>'.\n"
     fi
@@ -119,7 +128,7 @@ function rpi() {
 
         echo "Open-source Raspberry Pi wizard tool."
         echo "Licensed under the MIT License, Yann M. Vidamment © 2024."
-        echo "https://github.com/MorganKryze/RaspberryPi-Setup-Wizard/"
+        echo "${LINK}https://github.com/MorganKryze/RaspberryPi-Setup-Wizard/${RESET}"
         sleep 1.5
         txt "\n=============================================================================\n"
         sleep 0.5
@@ -420,8 +429,15 @@ EOF
             info "Installing Portainer on $hostname...\n"
             ssh $hostname "sudo docker volume create portainer_data"
             ssh $hostname "sudo docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce"
-    
-	    	success "Portainer is now running on at http://localhost:9000 \n"
+
+            info "Fixing Portainer permissions\n"
+            if [ -f /portainer ]; then
+                warning "Portainer directory does not exist, creating it...\n"
+                ssh $hostname "sudo mkdir /portainer"
+            fi
+	        ssh $hostname "sudo chown -R 1000:1000 /portainer" || error "Failed to fix Portainer permissions. Consider checking the directory permissions."
+
+	    	success "Portainer is now running on at ${LINK}http://$ip_address:9000\n${RESET}"
 	    fi
     }
 
