@@ -7,6 +7,7 @@ RED='\033[0;31m'
 ORANGE='\033[0;33m'
 RESET='\033[0m'
 LINK='\033[0;36m'
+UNDERLINE='\033[4m'
 
 # Displays a raw message.
 # $1: The message to display.
@@ -54,7 +55,7 @@ function success {
 # Displays a description of a function.
 # $1: The function name.
 function description () {
-    info "${GREEN}The ${BLUE}$1${GREEN} function $2 ${RESET}\n"
+    info "${GREEN}The ${BLUE}$1${GREEN} command $2 ${RESET}\n"
     sleep 2
 }
 # =============================================================================
@@ -110,9 +111,9 @@ function get-host-info() {
 function show-link() {
     if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
         get-host-info
-        info "Linked to user: ${ORANGE}$username${RESET}, host: ${ORANGE}$hostname${RESET} at IP: ${ORANGE}$ip_address${RESET}\n"
+        info "Linked to user: ${ORANGE}$username${RESET}, host: ${ORANGE}$hostname${RESET} at IP: ${ORANGE}$ip_address${RESET}.\n"
     else 
-        warning "No host.json file found. Consider running 'rpi link <username> <hostname>'.\n"
+        warning "Not linked to a Raspberry Pi. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}'.\n"
     fi
 }
 # =============================================================================
@@ -122,81 +123,205 @@ function show-link() {
 # Raspberry Pi Wizard main function.
 function rpi() {
 
-    function help() {
+    function intro() {
         display-banner
 
         txt "Open-source Raspberry Pi wizard tool."
         txt "Licensed under the MIT License, Yann M. Vidamment © 2024."
         txt "${LINK}https://github.com/MorganKryze/RaspberryPi-Setup-Wizard/${RESET}"
-        sleep 1.5
         txt "\n=============================================================================\n"
-        sleep 0.5
+        sleep 1
         show-link
+    }
+
+    function functions() {
+        info "Type '${BLUE}rpi help${RESET}' ${UNDERLINE}alone${RESET} or ${UNDERLINE}followed by the command name${RESET} to get more information.\n"
 
         info "Available commands:\n"
-
-        for func in help init link unlink ssh env; do
-            blue "  $func:"
+        
+        for func in help init link unlink connect ssh env docker git firewall; do
+            blue "  $func"
             case "$func" in
             "help")
+                green "    Display the help text for each command."
+                ;;
+            "init")
+                green "    Add the Raspberry Pi Wizard to the shell path."
+                ;;
+            "link")
+                green "    Link the Raspberry Pi to a username and hostname."
+                ;;
+            "unlink")
+                green "    Unlink the Raspberry Pi from a username and hostname."
+                ;;  
+            "connect")
+                green "    Connect to the Raspberry Pi using SSH."
+                ;;
+            "ssh")    
+                green "    Add an SSH key to the Raspberry Pi."
+                ;;
+            "env")        
+                green "    Set up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases."
+                ;;
+            "docker")
+                green "    Set up Docker on the Raspberry Pi."
+                ;;
+            "git")
+                green "    Configure git on the Raspberry Pi to a specific account."
+                ;;
+            "firewall")
+                green "    Set up a custom firewall on the Raspberry Pi."
+                ;;
+            *)
+                error "  No help text available."
+                ;;
+            esac
+            sleep 0.1
+        done
+    }
+
+    # Displays the help text for each command.
+    # $1: The function name.
+    function help() {
+        description help "displays the help text for each command."
+
+        if [ $# -eq 1 ]; then
+            case $1 in
+            help)
+                blue "  help:"
                 green "    Display the help text for each command.\n"
                 txt "    Usage: ${BLUE}rpi help${RESET}"
                 ;;
-
-            "init")
+            init)
+                blue "  init:"
                 green "    Add the Raspberry Pi Wizard to the shell path.\n"
                 txt "    Usage: ${BLUE}rpi init${RESET}"
                 ;;
-
-            "link")
+            link)
+                blue "  link:"
                 green "    Link the Raspberry Pi to a username and hostname.\n"
                 txt "    Usage: ${BLUE}rpi link${RESET} ${RED}<username> <hostname>${RESET}"
                 txt "      ${RED}username:${RESET} The username of the Raspberry Pi."
                 txt "      ${RED}hostname:${RESET} The hostname of the Raspberry Pi."
                 ;;
-
-            "unlink")
+            unlink)
+                blue "  unlink:"
                 green "    Unlink the Raspberry Pi from a username and hostname.\n"
                 txt "    Usage: ${BLUE}rpi unlink${RESET}"
                 ;;
-
-            "ssh")
+            connect)
+                blue "  connect:"
+                green "    Connect to the Raspberry Pi using SSH.\n"
+                txt "    Usage: ${BLUE}rpi connect${RESET}"
+                ;;
+            ssh)
+                blue "  ssh:"
                 green "    Add an SSH key to the Raspberry Pi.\n"
                 txt "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET}"
                 txt "      ${ORANGE}passphrase:${RESET} The passphrase for the SSH key."
                 ;;
-            
-            "env")
+            env)
+                blue "  env:"
                 green "    Set up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases.\n"
                 txt "    Usage: ${BLUE}rpi env${RESET}"
                 ;;
-            
-            "docker")
+            docker)
+                blue "  docker:"
                 green "    Set up Docker on the Raspberry Pi.\n"
                 txt "    Usage: ${BLUE}rpi docker${RESET} ${ORANGE}[--portainer|-p]${RESET}"
                 txt "      ${ORANGE}--portainer, -p:${RESET} Install Portainer alongside docker to manage containers."
                 ;;
-
-            "git")
+            git)
+                blue "  git:"
                 green "    Configure git on the Raspberry Pi to a specific account.\n"
                 txt "    Usage: ${BLUE}rpi git${RESET} ${RED}<email>${RESET}"
                 txt "      ${RED}email:${RESET} The email for the git configuration."
                 ;;
-
-            "firewall")
-                green "    Set up a custom firewall on the Raspberry Pi.\n"
+            firewall)
+                blue "  firewall:"
+                green "    Set up
+                a custom firewall on the Raspberry Pi.\n"
                 txt "    Usage: ${BLUE}rpi firewall${RESET} ${ORANGE}[--enable|-e|--disable|-d]${RESET}"
                 txt "      ${ORANGE}--enable, -e:${RESET} Enable the firewall."
                 txt "      ${ORANGE}--disable, -d:${RESET} Disable the firewall."
                 ;;
-
             *)
-                error "  No help text available."
+
+                error "Command not found. No help text available."
                 ;;
             esac
-            txt ""
-            sleep 0.2
-        done
+        else
+            intro 
+
+            info "Available commands:\n"
+            for func in help init link unlink connect ssh env docker git firewall; do
+                blue "  $func:"
+                case "$func" in
+                "help")
+                    green "    Display the help text for each command.\n"
+                    txt "    Usage: ${BLUE}rpi help${RESET}"
+                    ;;
+
+                "init")
+                    green "    Add the Raspberry Pi Wizard to the shell path.\n"
+                    txt "    Usage: ${BLUE}rpi init${RESET}"
+                    ;;
+
+                "link")
+                    green "    Link the Raspberry Pi to a username and hostname.\n"
+                    txt "    Usage: ${BLUE}rpi link${RESET} ${RED}<username> <hostname>${RESET}"
+                    txt "      ${RED}username:${RESET} The username of the Raspberry Pi."
+                    txt "      ${RED}hostname:${RESET} The hostname of the Raspberry Pi."
+                    ;;
+
+                "unlink")
+                    green "    Unlink the Raspberry Pi from a username and hostname.\n"
+                    txt "    Usage: ${BLUE}rpi unlink${RESET}"
+                    ;;
+
+                "connect")
+                    green "    Connect to the Raspberry Pi using SSH.\n"
+                    txt "    Usage: ${BLUE}rpi connect${RESET}"
+                    ;;
+
+                "ssh")
+                    green "    Add an SSH key to the Raspberry Pi.\n"
+                    txt "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET}"
+                    txt "      ${ORANGE}passphrase:${RESET} The passphrase for the SSH key."
+                    ;;
+
+                "env")
+                    green "    Set up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases.\n"
+                    txt "    Usage: ${BLUE}rpi env${RESET}"
+                    ;;
+
+                "docker")
+                    green "    Set up Docker on the Raspberry Pi.\n"
+                    txt "    Usage: ${BLUE}rpi docker${RESET} ${ORANGE}[--portainer|-p]${RESET}"
+                    txt "      ${ORANGE}--portainer, -p:${RESET} Install Portainer alongside docker to manage containers."
+                    ;;
+
+                "git")
+                    green "    Configure git on the Raspberry Pi to a specific account.\n"
+                    txt "    Usage: ${BLUE}rpi git${RESET} ${RED}<email>${RESET}"
+                    txt "      ${RED}email:${RESET} The email for the git configuration."
+                    ;;
+
+                "firewall")
+                    green "    Set up a custom firewall on the Raspberry Pi.\n"
+                    txt "    Usage: ${BLUE}rpi firewall${RESET} ${ORANGE}[--enable|-e|--disable|-d]${RESET}"
+                    txt "      ${ORANGE}--enable, -e:${RESET} Enable the firewall."
+                    txt "      ${ORANGE}--disable, -d:${RESET} Disable the firewall."
+                    ;;
+
+                *)
+                    error "Command not found. No help text available."
+                    ;;
+                esac
+                txt ""
+                sleep 0.2
+            done
+        fi
     }
     
     # Adds the Raspberry Pi Wizard to the shell "path".
@@ -224,7 +349,7 @@ function rpi() {
             txt "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET} \n"
         fi
 
-        success "Ensure that the first path ends with ${ORANGE}'.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'${RESET}"
+        success "Ensure that the first path ends with ${ORANGE}'.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'${RESET}."
 }
 
     # Stores the username and hostname in a JSON file.
@@ -241,7 +366,7 @@ function rpi() {
 }"
 
         echo "$storage" > $RPI_SETUP_WIZARD_PATH/src/host.json || error "Failed to create the host.json file." || return 1
-        success "Currently linked to user: $usr, host: $host"
+        success "Currently linked to user: $usr, host: $host."
     }
 
     # Removes the host.json file.
@@ -251,10 +376,23 @@ function rpi() {
         if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
             rm $RPI_SETUP_WIZARD_PATH/src/host.json
         else
-            error "No host.json file found. Consider running 'rpi link <username> <hostname>' first." || return 1
+            error "No host.json file found. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
         fi
 
         success "Unlinked the Raspberry Pi."
+    }
+
+    # Connects to the Raspberry Pi using SSH.
+    function connect() {
+        description connect "connects to the Raspberry Pi using SSH."
+
+        info "Getting the username and hostname from the host.json file...\n"
+        get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
+
+        show-link
+
+        info "Connecting to $hostname...\n"
+        ssh $hostname || error "Failed to connect to $hostname. Consider checking Rpi status and credentials." || return 1
     }
 
     # Adds an SSH key to the Raspberry Pi.
@@ -262,19 +400,19 @@ function rpi() {
     function add-ssh() {
         description ssh "adds an SSH key to the Raspberry Pi for passwordless login."
 
-        info "Getting the username and hostname from the host.json file.\n"
-        get-host-info || error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>' first." || return 1
+        info "Getting the username and hostname from the host.json file...\n"
+        get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
         
         show-link
         
-    	info "Creating new SSH key \n"
+    	info "Creating new SSH key...\n"
         ssh-keygen -f /Users/$global_user/.ssh/$hostname -C "$hostname" -N "$1"
 
-    	info "Copying SSH key to $hostname, you will need to enter the password for $usr\n"
+    	info "Copying SSH key to $hostname, you will need to enter the password for $usr...\n"
     	sleep 2
         ssh-copy-id -o StrictHostKeyChecking=no -i /Users/$global_user/.ssh/$hostname.pub $usr@$hostname.local
 
-    	info "Adding $hostname to ~/.ssh/config\n"
+    	info "Adding $hostname to ~/.ssh/config file...\n"
         tempfile=$(mktemp)
         cat <<EOF > "$tempfile"
 Host $hostname
@@ -286,22 +424,22 @@ EOF
         cat ~/.ssh/config >> "$tempfile"
         mv "$tempfile" ~/.ssh/config
 
-    	success "You can now SSH into $hostname with 'ssh $hostname'\n"
+    	success "You can now SSH into $hostname with 'ssh $hostname'."
     }
 
     # Sets up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases.
     function env() {
         description env "sets up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases."
 
-        info "Getting the username and hostname from the host.json file.\n"
-        get-host-info || error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>' first." || return 1
+        info "Getting the username and hostname from the host.json file...\n"
+        get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
         
         show-link
 
-	    info "Updating and Upgrading packages\n"
-	    ssh $hostname "sudo apt-get update && sudo apt-get upgrade -y" || error "Failed to connect to $host. Consider running 'rpi ssh' first." || return 1
+	    info "Updating and Upgrading packages...\n"
+	    ssh $hostname "sudo apt-get update && sudo apt-get upgrade -y" || error "Failed to connect to $host. Consider running '${BLUE}rpi ssh${RESET}' first." || return 1
 
-	    info "Installing ZSH\n"
+	    info "Installing ZSH...\n"
 	    if ! ssh $hostname "command -v zsh >/dev/null 2>&1"; then
 	    	ssh $hostname "sudo apt-get install zsh -y"
 	    	ssh $hostname "chsh -s $(which zsh)"
@@ -310,7 +448,7 @@ EOF
             ssh $hostname "zsh --version"
 	    fi
 
-	    info "Installing Git\n"
+	    info "Installing Git...\n"
 	    if ! ssh $hostname "command -v git >/dev/null 2>&1"; then
 	    	ssh $hostname "sudo apt-get install git -y"
         else 
@@ -318,7 +456,7 @@ EOF
             ssh $hostname "git --version"
 	    fi
 
-	    info "Installing Oh My Zsh\n"
+	    info "Installing Oh My Zsh...\n"
 	    if ssh $hostname "[ ! -d \"~/.oh-my-zsh\" ]"; then
 	    	ssh $hostname "sh -c $(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 	    	ssh $hostname "sed -i '/ZSH_THEME=/d' ~/.zshrc && sed -i '1iZSH_THEME=\"candy\"' ~/.zshrc"
@@ -333,7 +471,7 @@ EOF
             ssh $hostname "omz version"
 	    fi
 
-	    info "InstaNeofetch\n"
+	    info "InstaNeofetch...\n"
 	    if ! ssh $hostname "command -v neofetch >/dev/null 2>&1"; then
 	    	ssh $hostname "sudo apt-get install neofetch -y"
 	    	ssh $hostname "echo neofetch >> ~/.zshrc"
@@ -342,7 +480,7 @@ EOF
             ssh $hostname "neofetch --version"
 	    fi
 
-	    info "Installing lsd\n"
+	    info "Installing lsd...\n"
 	    if ! ssh $hostname "command -v lsd >/dev/null 2>&1"; then
 	    	ssh $hostname "sudo apt-get install lsd -y"
         else 
@@ -350,7 +488,7 @@ EOF
             ssh $hostname "lsd --version"
 	    fi
 
-        info "Adding aliases and .zshenv\n"
+        info "Adding aliases and .zshenv...\n"
         if ! ssh $hostname "test -f ~/.aliases"; then
             ssh $hostname "curl -O $ALIASES_PATH > ~/.aliases"
         else 
@@ -362,7 +500,7 @@ EOF
             warning ".zshenv file already exists. Skipping..."
         fi
 
-	    info "Removing 'NO WARRANTY' welcome message.\n"
+	    info "Removing 'NO WARRANTY' welcome message...\n"
 	    ssh $hostname "touch ~/.hushlogin"
 
 	    warning "Rebooting in 5 sec, please wait a few moments.\n"
@@ -380,8 +518,8 @@ EOF
     function docker() {
         description docker "sets up Docker on the Raspberry Pi."
 
-        info "Getting the username and hostname from the host.json file.\n"
-        get-host-info || error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>' first." || return 1
+        info "Getting the username and hostname from the host.json file...\n"
+        get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
         
         show-link
 
@@ -390,10 +528,10 @@ EOF
             PORTAINER=true
         fi
 
-        info "Setting up working directories\n"
+        info "Setting up working directories...\n"
         ssh $hostname "mkdir -p /home/$username/containers_data" || warning "Failed to create working directories"
 
-        info "Checking if Docker is installed\n"
+        info "Checking if Docker is installed...\n"
         if ! ssh $hostname "command -v docker >/dev/null 2>&1"; then
             ssh $hostname "curl -fsSL https://get.docker.com | sh" || error "Failed to install Docker on $hostname" || return 1
         else
@@ -401,7 +539,7 @@ EOF
             ssh $hostname "docker --version" || error "Failed to get Docker version" || return 1
         fi
 
-	    info "Adding $username to the Docker group\n"
+	    info "Adding $username to the Docker group...\n"
 	    if ! ssh $hostname "groups $username | grep -q docker"; then
 	    	ssh $hostname "sudo usermod -aG docker $username" || error "Failed to add $username to the Docker group" || return 1
         else
@@ -409,7 +547,7 @@ EOF
             ssh $hostname "groups $username" || error "Failed to get $username groups" || return 1
 	    fi
 
-	    info "Installing lazydocker\n"
+	    info "Installing lazydocker...\n"
         if ! ssh $hostname "command -v lazydocker >/dev/null 2>&1"; then
             ssh $hostname "curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | zsh" || error "Failed to install lazydocker on $hostname" || return 1
             ssh $hostname "sudo ln -s /home/$username/.local/bin/lazydocker /usr/bin/" || error "Failed to create symlink for lazydocker" || return 1
@@ -423,7 +561,7 @@ EOF
 
 	    ssh $hostname "sudo reboot" || error "Failed to reboot $hostname" || return 1
 
-	    info "Waiting for $hostname to reboot.\n"
+	    info "Waiting for $hostname to reboot...\n"
 	    sleep 45
 
 	    success "Docker is now set up on $hostname\n"
@@ -445,7 +583,7 @@ EOF
             ssh $hostname "sudo docker volume create portainer_data"
             ssh $hostname "sudo docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce"
 
-            info "Fixing Portainer permissions\n"
+            info "Fixing Portainer permissions...\n"
             if [ -f /portainer ]; then
                 warning "Portainer directory does not exist, creating it...\n"
                 ssh $hostname "sudo mkdir /portainer"
@@ -461,31 +599,31 @@ EOF
     function setup-git() {
         description git "configures git on the Raspberry Pi to a specific account."
 
-        info "Getting the username and hostname from the host.json file.\n"
-        get-host-info || error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>' first." || return 1
+        info "Getting the username and hostname from the host.json file...\n"
+        get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
 
         show-link
 
-    	info "Generating SSH key pair for $hostname\n"
+    	info "Generating SSH key pair for $hostname...\n"
     	ssh $hostname "ssh-keygen -t ed25519 -C "$1" -f ~/.ssh/id_ed25519" || error "Failed to generate SSH key pair" || return 1
 
-    	info "Starting the ssh-agent in the background\n"
+    	info "Starting the ssh-agent in the background...\n"
     	ssh $hostname "eval "$(ssh-agent -s)"" || error "Failed to start the ssh-agent in the background" || return 1
 
-    	info "Adding hithub as known hosts for ssh\n"
+    	info "Adding hithub as known hosts for ssh...\n"
     	ssh $hostname "echo "Host github.com
       IgnoreUnknown UseKeychain
       AddKeysToAgent yes
       UseKeychain yes
       IdentityFile ~/.ssh/id_ed25519" > ~/.ssh/config" || error "Failed to add github as known hosts for ssh" || return 1
 
-    	info "Adding your SSH private key to the ssh-agent\n"
+    	info "Adding your SSH private key to the ssh-agent...\n"
     	ssh $hostname "ssh-add ~/.ssh/id_ed25519" || error "Failed to add your SSH private key to the ssh-agent" || return 1
 
     	info "Go to https://github.com/settings/keys and add the following SSH public key:\n"
     	ssh $hostname "cat ~/.ssh/id_ed25519.pub" || error "Failed to display the SSH public key" || return 1
 
-        info "Setting up username and email\n"
+        info "Setting up username and email...\n"
     	ssh $hostname "git config --global user.name $username" || error "Failed to set up username" || return 1
     	ssh $hostname "git config --global user.email $1" || error "Failed to set up email" || return 1
     
@@ -497,8 +635,8 @@ EOF
     function firewall() {
         description firewall "sets up a custom firewall on the Raspberry Pi."
 
-        info "Getting the username and hostname from the host.json file.\n"
-        get-host-info || error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>' first." || return 1
+        info "Getting the username and hostname from the host.json file...\n"
+        get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
 
         show-link
 
@@ -550,7 +688,8 @@ EOF
 
     case $# in
     0)
-        help
+        intro
+        functions
         ;;
     1)
         case $1 in
@@ -565,6 +704,9 @@ EOF
                 ;;
             unlink)
                 unlink
+                ;;
+            connect)
+                connect
                 ;;
             ssh)
                 add-ssh
@@ -589,7 +731,7 @@ EOF
     2)
         case $1 in
             help)
-                error "Usage: ${BLUE}rpi help"
+                help $2
                 ;;
             init)
                 error "Usage: ${BLUE}rpi init"
@@ -599,6 +741,9 @@ EOF
                 ;;
             unlink)
                 error "Usage: ${BLUE}rpi unlink"
+                ;;
+            connect)
+                error "Usage: ${BLUE}rpi connect"
                 ;;
             ssh)
                 add-ssh $2
@@ -645,6 +790,9 @@ EOF
                 ;;
             unlink)
                 unlink
+                ;;
+            connect)
+                error "Usage: ${BLUE}rpi connect"
                 ;;
             ssh)
                 error "Usage: ${BLUE}rpi ssh ${ORANGE}[passphrase]${RESET}"
