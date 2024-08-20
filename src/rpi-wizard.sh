@@ -111,9 +111,9 @@ function get-host-info() {
 function show-link() {
     if [ -f $RPI_SETUP_WIZARD_PATH/src/host.json ]; then
         get-host-info
-        info "Linked to user: ${ORANGE}$username${RESET}, host: ${ORANGE}$hostname${RESET} at IP: ${ORANGE}$ip_address${RESET}.\n"
+        info "Linked to user: ${ORANGE}$username${RESET}, host: ${ORANGE}$hostname${RESET} at IP: ${ORANGE}$ip_address${RESET}."
     else 
-        warning "Not linked to a Raspberry Pi. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}'.\n"
+        warning "Not linked to a Raspberry Pi. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}'."
     fi
 }
 # =============================================================================
@@ -135,9 +135,9 @@ function rpi() {
     }
 
     function functions() {
-        info "Type '${BLUE}rpi help${RESET}' ${UNDERLINE}alone${RESET} or ${UNDERLINE}followed by the command name${RESET} to get more information.\n"
+        info "Type '${BLUE}rpi help${RESET}' ${UNDERLINE}alone${RESET} or ${UNDERLINE}followed by the command name${RESET} to get more information."
 
-        info "Available commands:\n"
+        info "Available commands:"
         
         for func in help init link unlink connect ssh env docker git firewall; do
             blue "  $func"
@@ -189,58 +189,58 @@ function rpi() {
             case $1 in
             help)
                 blue "  help:"
-                green "    Display the help text for each command.\n"
+                green "    Display the help text for each command."
                 txt "    Usage: ${BLUE}rpi help${RESET}"
                 ;;
             init)
                 blue "  init:"
-                green "    Add the Raspberry Pi Wizard to the shell path.\n"
+                green "    Add the Raspberry Pi Wizard to the shell path."
                 txt "    Usage: ${BLUE}rpi init${RESET}"
                 ;;
             link)
                 blue "  link:"
-                green "    Link the Raspberry Pi to a username and hostname.\n"
+                green "    Link the Raspberry Pi to a username and hostname."
                 txt "    Usage: ${BLUE}rpi link${RESET} ${RED}<username> <hostname>${RESET}"
                 txt "      ${RED}username:${RESET} The username of the Raspberry Pi."
                 txt "      ${RED}hostname:${RESET} The hostname of the Raspberry Pi."
                 ;;
             unlink)
                 blue "  unlink:"
-                green "    Unlink the Raspberry Pi from a username and hostname.\n"
+                green "    Unlink the Raspberry Pi from a username and hostname."
                 txt "    Usage: ${BLUE}rpi unlink${RESET}"
                 ;;
             connect)
                 blue "  connect:"
-                green "    Connect to the Raspberry Pi using SSH.\n"
+                green "    Connect to the Raspberry Pi using SSH."
                 txt "    Usage: ${BLUE}rpi connect${RESET}"
                 ;;
             ssh)
                 blue "  ssh:"
-                green "    Add an SSH key to the Raspberry Pi.\n"
+                green "    Add an SSH key to the Raspberry Pi."
                 txt "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET}"
                 txt "      ${ORANGE}passphrase:${RESET} The passphrase for the SSH key."
                 ;;
             env)
                 blue "  env:"
-                green "    Set up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases.\n"
+                green "    Set up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases."
                 txt "    Usage: ${BLUE}rpi env${RESET}"
                 ;;
             docker)
                 blue "  docker:"
-                green "    Set up Docker on the Raspberry Pi.\n"
+                green "    Set up Docker on the Raspberry Pi."
                 txt "    Usage: ${BLUE}rpi docker${RESET} ${ORANGE}[--portainer|-p]${RESET}"
                 txt "      ${ORANGE}--portainer, -p:${RESET} Install Portainer alongside docker to manage containers."
                 ;;
             git)
                 blue "  git:"
-                green "    Configure git on the Raspberry Pi to a specific account.\n"
+                green "    Configure git on the Raspberry Pi to a specific account."
                 txt "    Usage: ${BLUE}rpi git${RESET} ${RED}<email>${RESET}"
                 txt "      ${RED}email:${RESET} The email for the git configuration."
                 ;;
             firewall)
                 blue "  firewall:"
                 green "    Set up
-                a custom firewall on the Raspberry Pi.\n"
+                a custom firewall on the Raspberry Pi."
                 txt "    Usage: ${BLUE}rpi firewall${RESET} ${ORANGE}[--enable|-e|--disable|-d]${RESET}"
                 txt "      ${ORANGE}--enable, -e:${RESET} Enable the firewall."
                 txt "      ${ORANGE}--disable, -d:${RESET} Disable the firewall."
@@ -253,62 +253,62 @@ function rpi() {
         else
             intro 
 
-            info "Available commands:\n"
+            info "Available commands:"
             for func in help init link unlink connect ssh env docker git firewall; do
                 blue "  $func:"
                 case "$func" in
                 "help")
-                    green "    Display the help text for each command.\n"
+                    green "    Display the help text for each command."
                     txt "    Usage: ${BLUE}rpi help${RESET}"
                     ;;
 
                 "init")
-                    green "    Add the Raspberry Pi Wizard to the shell path.\n"
+                    green "    Add the Raspberry Pi Wizard to the shell path."
                     txt "    Usage: ${BLUE}rpi init${RESET}"
                     ;;
 
                 "link")
-                    green "    Link the Raspberry Pi to a username and hostname.\n"
+                    green "    Link the Raspberry Pi to a username and hostname."
                     txt "    Usage: ${BLUE}rpi link${RESET} ${RED}<username> <hostname>${RESET}"
                     txt "      ${RED}username:${RESET} The username of the Raspberry Pi."
                     txt "      ${RED}hostname:${RESET} The hostname of the Raspberry Pi."
                     ;;
 
                 "unlink")
-                    green "    Unlink the Raspberry Pi from a username and hostname.\n"
+                    green "    Unlink the Raspberry Pi from a username and hostname."
                     txt "    Usage: ${BLUE}rpi unlink${RESET}"
                     ;;
 
                 "connect")
-                    green "    Connect to the Raspberry Pi using SSH.\n"
+                    green "    Connect to the Raspberry Pi using SSH."
                     txt "    Usage: ${BLUE}rpi connect${RESET}"
                     ;;
 
                 "ssh")
-                    green "    Add an SSH key to the Raspberry Pi.\n"
+                    green "    Add an SSH key to the Raspberry Pi."
                     txt "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET}"
                     txt "      ${ORANGE}passphrase:${RESET} The passphrase for the SSH key."
                     ;;
 
                 "env")
-                    green "    Set up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases.\n"
+                    green "    Set up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases."
                     txt "    Usage: ${BLUE}rpi env${RESET}"
                     ;;
 
                 "docker")
-                    green "    Set up Docker on the Raspberry Pi.\n"
+                    green "    Set up Docker on the Raspberry Pi."
                     txt "    Usage: ${BLUE}rpi docker${RESET} ${ORANGE}[--portainer|-p]${RESET}"
                     txt "      ${ORANGE}--portainer, -p:${RESET} Install Portainer alongside docker to manage containers."
                     ;;
 
                 "git")
-                    green "    Configure git on the Raspberry Pi to a specific account.\n"
+                    green "    Configure git on the Raspberry Pi to a specific account."
                     txt "    Usage: ${BLUE}rpi git${RESET} ${RED}<email>${RESET}"
                     txt "      ${RED}email:${RESET} The email for the git configuration."
                     ;;
 
                 "firewall")
-                    green "    Set up a custom firewall on the Raspberry Pi.\n"
+                    green "    Set up a custom firewall on the Raspberry Pi."
                     txt "    Usage: ${BLUE}rpi firewall${RESET} ${ORANGE}[--enable|-e|--disable|-d]${RESET}"
                     txt "      ${ORANGE}--enable, -e:${RESET} Enable the firewall."
                     txt "      ${ORANGE}--disable, -d:${RESET} Disable the firewall."
@@ -339,14 +339,14 @@ function rpi() {
             info "Added the following line to your .zshrc file:"
             txt "# Raspberry Pi Wizard executable"
             txt "source ${ORANGE}$script_path${RESET}"
-            txt "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET} \n"
+            txt "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET}"
 
-            info "Restart your terminal to use the 'rpi' command globally.\n"
+            info "Restart your terminal to use the 'rpi' command globally."
         else
             info "Consider adding the following lines to your .bashrc/.zshrc/your config file:"
             txt "# Raspberry Pi Wizard executable"
             txt "source ${ORANGE}$script_path${RESET}"
-            txt "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET} \n"
+            txt "export RPI_SETUP_WIZARD_PATH=${ORANGE}$project_path${RESET} "
         fi
 
         success "Ensure that the first path ends with ${ORANGE}'.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'${RESET}."
@@ -386,13 +386,13 @@ function rpi() {
     function connect() {
         description connect "connects to the Raspberry Pi using SSH."
 
-        info "Getting the username and hostname from the host.json file...\n"
+        info "Getting the username and hostname from the host.json file..."
         get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
 
         show-link
 
-        info "Connecting to $hostname...\n"
-        ssh $hostname || error "Failed to connect to $hostname. Consider checking Rpi status and credentials." || return 1
+        info "Connecting to $hostname..."
+        ssh $hostname
     }
 
     # Adds an SSH key to the Raspberry Pi.
@@ -400,19 +400,19 @@ function rpi() {
     function add-ssh() {
         description ssh "adds an SSH key to the Raspberry Pi for passwordless login."
 
-        info "Getting the username and hostname from the host.json file...\n"
+        info "Getting the username and hostname from the host.json file..."
         get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
         
         show-link
         
-    	info "Creating new SSH key...\n"
+    	info "Creating new SSH key..."
         ssh-keygen -f /Users/$global_user/.ssh/$hostname -C "$hostname" -N "$1"
 
-    	info "Copying SSH key to $hostname, you will need to enter the password for $usr...\n"
+    	info "Copying SSH key to $hostname, you will need to enter the password for $usr..."
     	sleep 2
         ssh-copy-id -o StrictHostKeyChecking=no -i /Users/$global_user/.ssh/$hostname.pub $usr@$hostname.local
 
-    	info "Adding $hostname to ~/.ssh/config file...\n"
+    	info "Adding $hostname to ~/.ssh/config file..."
         tempfile=$(mktemp)
         cat <<EOF > "$tempfile"
 Host $hostname
@@ -431,15 +431,15 @@ EOF
     function env() {
         description env "sets up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases."
 
-        info "Getting the username and hostname from the host.json file...\n"
+        info "Getting the username and hostname from the host.json file..."
         get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
         
         show-link
 
-	    info "Updating and Upgrading packages...\n"
+	    info "Updating and Upgrading packages..."
 	    ssh $hostname "sudo apt-get update && sudo apt-get upgrade -y" || error "Failed to connect to $host. Consider running '${BLUE}rpi ssh${RESET}' first." || return 1
 
-	    info "Installing ZSH...\n"
+	    info "Installing ZSH..."
 	    if ! ssh $hostname "command -v zsh >/dev/null 2>&1"; then
 	    	ssh $hostname "sudo apt-get install zsh -y"
 	    	ssh $hostname "chsh -s $(which zsh)"
@@ -448,7 +448,7 @@ EOF
             ssh $hostname "zsh --version"
 	    fi
 
-	    info "Installing Git...\n"
+	    info "Installing Git..."
 	    if ! ssh $hostname "command -v git >/dev/null 2>&1"; then
 	    	ssh $hostname "sudo apt-get install git -y"
         else 
@@ -456,7 +456,7 @@ EOF
             ssh $hostname "git --version"
 	    fi
 
-	    info "Installing Oh My Zsh...\n"
+	    info "Installing Oh My Zsh..."
 	    if ssh $hostname "[ ! -d \"~/.oh-my-zsh\" ]"; then
 	    	ssh $hostname "sh -c $(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 	    	ssh $hostname "sed -i '/ZSH_THEME=/d' ~/.zshrc && sed -i '1iZSH_THEME=\"candy\"' ~/.zshrc"
@@ -471,7 +471,7 @@ EOF
             ssh $hostname "omz version"
 	    fi
 
-	    info "InstaNeofetch...\n"
+	    info "Installing Neofetch..."
 	    if ! ssh $hostname "command -v neofetch >/dev/null 2>&1"; then
 	    	ssh $hostname "sudo apt-get install neofetch -y"
 	    	ssh $hostname "echo neofetch >> ~/.zshrc"
@@ -480,7 +480,7 @@ EOF
             ssh $hostname "neofetch --version"
 	    fi
 
-	    info "Installing lsd...\n"
+	    info "Installing lsd..."
 	    if ! ssh $hostname "command -v lsd >/dev/null 2>&1"; then
 	    	ssh $hostname "sudo apt-get install lsd -y"
         else 
@@ -488,7 +488,7 @@ EOF
             ssh $hostname "lsd --version"
 	    fi
 
-        info "Adding aliases and .zshenv...\n"
+        info "Adding aliases and .zshenv..."
         if ! ssh $hostname "test -f ~/.aliases"; then
             ssh $hostname "curl -O $ALIASES_PATH > ~/.aliases"
         else 
@@ -500,17 +500,17 @@ EOF
             warning ".zshenv file already exists. Skipping..."
         fi
 
-	    info "Removing 'NO WARRANTY' welcome message...\n"
+	    info "Removing 'NO WARRANTY' welcome message..."
 	    ssh $hostname "touch ~/.hushlogin"
 
 	    warning "Rebooting in 5 sec, please wait a few moments.\n"
 	    sleep 5
 	    ssh $hostname "sudo reboot"
 
-	    info "Rebooting...\n"
+	    info "Rebooting..."
 	    sleep 45
 
-	    success "$hostname is now ready to use.\n"
+	    success "$hostname is now ready to use."
     }
 
     # Sets up Docker on the Raspberry Pi.
@@ -518,7 +518,7 @@ EOF
     function docker() {
         description docker "sets up Docker on the Raspberry Pi."
 
-        info "Getting the username and hostname from the host.json file...\n"
+        info "Getting the username and hostname from the host.json file..."
         get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
         
         show-link
@@ -528,43 +528,43 @@ EOF
             PORTAINER=true
         fi
 
-        info "Setting up working directories...\n"
+        info "Setting up working directories..."
         ssh $hostname "mkdir -p /home/$username/containers_data" || warning "Failed to create working directories"
 
-        info "Checking if Docker is installed...\n"
+        info "Checking if Docker is installed..."
         if ! ssh $hostname "command -v docker >/dev/null 2>&1"; then
             ssh $hostname "curl -fsSL https://get.docker.com | sh" || error "Failed to install Docker on $hostname" || return 1
         else
-            warning "Docker is already installed\n"
+            warning "Docker is already installed"
             ssh $hostname "docker --version" || error "Failed to get Docker version" || return 1
         fi
 
-	    info "Adding $username to the Docker group...\n"
+	    info "Adding $username to the Docker group..."
 	    if ! ssh $hostname "groups $username | grep -q docker"; then
 	    	ssh $hostname "sudo usermod -aG docker $username" || error "Failed to add $username to the Docker group" || return 1
         else
-            warning "$username is already in the Docker group, current groups:\n"
+            warning "$username is already in the Docker group, current groups:"
             ssh $hostname "groups $username" || error "Failed to get $username groups" || return 1
 	    fi
 
-	    info "Installing lazydocker...\n"
+	    info "Installing lazydocker..."
         if ! ssh $hostname "command -v lazydocker >/dev/null 2>&1"; then
             ssh $hostname "curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | zsh" || error "Failed to install lazydocker on $hostname" || return 1
             ssh $hostname "sudo ln -s /home/$username/.local/bin/lazydocker /usr/bin/" || error "Failed to create symlink for lazydocker" || return 1
         else
-            warning "lazydocker is already installed\n"
+            warning "lazydocker is already installed"
             ssh $hostname "lazydocker --version" || error "Failed to get lazydocker version" || return 1
         fi
 
-	    warning "Rebooting in 5 sec, please wait a few moments.\n"
+	    warning "Rebooting in 5 sec, please wait a few moments."
 	    sleep 5
 
 	    ssh $hostname "sudo reboot" || error "Failed to reboot $hostname" || return 1
 
-	    info "Waiting for $hostname to reboot...\n"
+	    info "Waiting for $hostname to reboot..."
 	    sleep 45
 
-	    success "Docker is now set up on $hostname\n"
+	    success "Docker is now set up on $hostname"
 
         if [ "$PORTAINER" = false ]; then
             if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -579,18 +579,18 @@ EOF
         fi
     
 	    if [ "$PORTAINER" = true ]; then
-            info "Installing Portainer on $hostname...\n"
+            info "Installing Portainer on $hostname..."
             ssh $hostname "sudo docker volume create portainer_data"
             ssh $hostname "sudo docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce"
 
-            info "Fixing Portainer permissions...\n"
+            info "Fixing Portainer permissions..."
             if [ -f /portainer ]; then
-                warning "Portainer directory does not exist, creating it...\n"
+                warning "Portainer directory does not exist, creating it"
                 ssh $hostname "sudo mkdir /portainer"
             fi
 	        ssh $hostname "sudo chown -R 1000:1000 /portainer" || error "Failed to fix Portainer permissions. Consider checking the directory permissions."
 
-	    	success "Portainer is now running on at ${LINK}http://$ip_address:9000\n${RESET}"
+	    	success "Portainer is now running on at ${LINK}http://$ip_address:9000${RESET}"
 	    fi
     }
 
@@ -599,35 +599,35 @@ EOF
     function setup-git() {
         description git "configures git on the Raspberry Pi to a specific account."
 
-        info "Getting the username and hostname from the host.json file...\n"
+        info "Getting the username and hostname from the host.json file..."
         get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
 
         show-link
 
-    	info "Generating SSH key pair for $hostname...\n"
+    	info "Generating SSH key pair for $hostname..."
     	ssh $hostname "ssh-keygen -t ed25519 -C "$1" -f ~/.ssh/id_ed25519" || error "Failed to generate SSH key pair" || return 1
 
-    	info "Starting the ssh-agent in the background...\n"
+    	info "Starting the ssh-agent in the background..."
     	ssh $hostname "eval "$(ssh-agent -s)"" || error "Failed to start the ssh-agent in the background" || return 1
 
-    	info "Adding hithub as known hosts for ssh...\n"
+    	info "Adding hithub as known hosts for ssh..."
     	ssh $hostname "echo "Host github.com
       IgnoreUnknown UseKeychain
       AddKeysToAgent yes
       UseKeychain yes
       IdentityFile ~/.ssh/id_ed25519" > ~/.ssh/config" || error "Failed to add github as known hosts for ssh" || return 1
 
-    	info "Adding your SSH private key to the ssh-agent...\n"
+    	info "Adding your SSH private key to the ssh-agent..."
     	ssh $hostname "ssh-add ~/.ssh/id_ed25519" || error "Failed to add your SSH private key to the ssh-agent" || return 1
 
-    	info "Go to https://github.com/settings/keys and add the following SSH public key:\n"
+    	info "Go to https://github.com/settings/keys and add the following SSH public key:"
     	ssh $hostname "cat ~/.ssh/id_ed25519.pub" || error "Failed to display the SSH public key" || return 1
 
-        info "Setting up username and email...\n"
+        info "Setting up username and email..."
     	ssh $hostname "git config --global user.name $username" || error "Failed to set up username" || return 1
     	ssh $hostname "git config --global user.email $1" || error "Failed to set up email" || return 1
     
-    	success "Git is now set up on $hostname\n"
+    	success "Git is now set up on $hostname"
     }
 
     # Sets up a firewall on the Raspberry Pi.
@@ -635,7 +635,7 @@ EOF
     function firewall() {
         description firewall "sets up a custom firewall on the Raspberry Pi."
 
-        info "Getting the username and hostname from the host.json file...\n"
+        info "Getting the username and hostname from the host.json file..."
         get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
 
         show-link
@@ -648,41 +648,72 @@ EOF
         elif [[ "$1" == "--disable" || "$1" == "-d" ]]; then
             DISABLE=true
         else
-            warning "No option specified, only setting up UFW...\n"
+            warning "No option specified, only setting up UFW"
             sleep 2
         fi
 
-        if ssh $hostname "command -v ufw >/dev/null 2>&1"; then
-            warning "UFW is already installed on $hostname.\n"
-            ssh $hostname "ufw status" || error "Failed to get UFW status" || return 1
+        if ssh $hostname "sudo ufw status" >/dev/null 2>&1; then
+            warning "UFW is already installed on $hostname."
+            ssh $hostname "sudo ufw status" || error "Failed to get UFW status" || return 1
         else 
-            info "Installing UFW...\n"
+            info "Installing UFW..."
 	        ssh $hostname "sudo apt-get install ufw -y" || error "Failed to install UFW on $hostname" || return 1
 
 	        info "Setting up UFW on $hostname:"
-            info "Denying all incoming connections...\n"
+            info "Denying all incoming connections..."
 	        ssh $hostname "sudo ufw default deny incoming" || error "Failed to deny all incoming connections" || return 1
 
-            info "Allowing all outgoing connections...\n"
+            info "Allowing all outgoing connections..."
 	        ssh $hostname "sudo ufw default allow outgoing" || error "Failed to allow all outgoing connections" || return 1
 
-            info "Allowing SSH connections and limiting them (prevent from bruteforce)...\n"
+            info "Allowing SSH connections and limiting them (prevent from bruteforce)..."
 	        ssh $hostname "sudo ufw allow ssh" || error "Failed to allow SSH connections" || return 1
 	        ssh $hostname "sudo ufw limit ssh" || error "Failed to limit SSH connections" || return 1
         fi
 
-        if [ "$ENABLE" = true ]; then
-            info "Enabling UFW...\n"
-            ssh $hostname "sudo ufw enable" || error "Failed to enable UFW" || return 1
+        warning "Please make sure to allow other ports if needed before enabling UFW."
+        info "To see all ports currenty used, type: \"sudo netstat -tuln\"."
+        info "To allow a port, use: \"sudo ufw allow <port>\" and to deny a port, use \"sudo ufw deny <port>\"."
+        sleep 3
 
-            success "UFW is now running\n"
-        elif [ "$DISABLE" = true ]; then
-            info "Disabling UFW...\n"
-            ssh $hostname "sudo ufw disable" || error "Failed to disable UFW" || return 1
+        if [ "$ENABLE" = true ] || [ "$DISABLE" = true ]; then
+            function get_ufw_status() {
+                ssh $hostname "sudo ufw status | awk '/Status:/{print \$2}'"
+            }
+            ufw_status=$(get_ufw_status)
 
-            success "UFW is now disabled\n"
+            if [ "$ENABLE" = true ]; then
+                if [[ "$ufw_status" == "active" ]]; then
+                    error "UFW is already enabled."
+                else
+                    info "Enabling UFW..."
+                    ssh $hostname "sudo ufw enable" || error "Failed to enable UFW" || return 1
+
+                    ufw_status=$(get_ufw_status)
+                    if [[ "$ufw_status" == "active" ]]; then
+                        success "UFW is now enabled on $hostname."
+                    else 
+                        error "Failed to enable UFW."
+                    fi
+                fi
+            elif [ "$DISABLE" = true ]; then
+                if [[ "$ufw_status" == "inactive" ]] then
+                    error "UFW is already disabled."
+                else
+                    info "Disabling UFW..."
+                    ssh $hostname "sudo ufw disable" || error "Failed to disable UFW" || return 1
+
+                    ufw_status=$(get_ufw_status)
+                    if [[ "$ufw_status" == "inactive" ]]; then
+                        success "UFW is now disabled on $hostname."
+                    else 
+                        error "Failed to disable UFW."
+                    fi
+                fi
+            else
+            fi
         else
-            success "UFW is now set up on $hostname\n"
+        success "UFW is now set up on $hostname"
         fi
     }
 
