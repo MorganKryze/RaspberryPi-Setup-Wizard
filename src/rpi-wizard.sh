@@ -190,7 +190,8 @@ function rpi() {
             help)
                 blue "  help:"
                 green "    Display the help text for each command."
-                txt "    Usage: ${BLUE}rpi help${RESET}"
+                txt "    Usage: ${BLUE}rpi help ${ORANGE}[command]${RESET}"
+                txt "      ${ORANGE}command:${RESET} The command name to display the help text."
                 ;;
             init)
                 blue "  init:"
@@ -259,7 +260,8 @@ function rpi() {
                 case "$func" in
                 "help")
                     green "    Display the help text for each command."
-                    txt "    Usage: ${BLUE}rpi help${RESET}"
+                    txt "    Usage: ${BLUE}rpi help ${ORANGE}[command]${RESET}"
+                    txt "      ${ORANGE}command:${RESET} The command name to display the help text."
                     ;;
 
                 "init")
@@ -807,7 +809,7 @@ EOF
     *)
         case $1 in
             help)
-                error "Usage: ${BLUE}rpi help"
+                error "Usage: ${BLUE}rpi help ${ORANGE}[command]${RESET}"
                 ;;
             init)
                 error "Usage: ${BLUE}rpi init"
