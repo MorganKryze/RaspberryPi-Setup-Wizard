@@ -29,26 +29,26 @@ function green() {
 # Displays an error message when a command fails.
 # $1: The error message to display.
 function error {
-  txt "${RED}[ ERROR ]${RESET} $1"
+  txt "${RED}[ ERROR ]${RESET} $1${RESET}"
   return 1
 }
 
 # Displays an information message.
 # $1: The message to display.
 function info {
-  echo "${BLUE}[ INFO ]${RESET} $1"
+  echo "${BLUE}[ INFO ]${RESET} $1${RESET}"
 }
 
 # Displays a warning message.
 # $1: The message to display.
 function warning {
-  echo "${ORANGE}[ WARNING ]${RESET} $1"
+  echo "${ORANGE}[ WARNING ]${RESET} $1${RESET}"
 }
 
 # Displays a success message.
 # $1: The message to display.
 function success {
-  echo "${GREEN}[ SUCCESS ]${RESET} $1"
+  echo "${GREEN}[ SUCCESS ]${RESET} $1${RESET}"
 }
 
 # Displays a description of a function.
@@ -125,9 +125,9 @@ function rpi() {
     function help() {
         display-banner
 
-        echo "Open-source Raspberry Pi wizard tool."
-        echo "Licensed under the MIT License, Yann M. Vidamment © 2024."
-        echo "${LINK}https://github.com/MorganKryze/RaspberryPi-Setup-Wizard/${RESET}"
+        txt "Open-source Raspberry Pi wizard tool."
+        txt "Licensed under the MIT License, Yann M. Vidamment © 2024."
+        txt "${LINK}https://github.com/MorganKryze/RaspberryPi-Setup-Wizard/${RESET}"
         sleep 1.5
         txt "\n=============================================================================\n"
         sleep 0.5
@@ -181,6 +181,13 @@ function rpi() {
                 green "    Configure git on the Raspberry Pi to a specific account.\n"
                 txt "    Usage: ${BLUE}rpi git${RESET} ${RED}<email>${RESET}"
                 txt "      ${RED}email:${RESET} The email for the git configuration."
+                ;;
+
+            "firewall")
+                green "    Set up a custom firewall on the Raspberry Pi.\n"
+                txt "    Usage: ${BLUE}rpi firewall${RESET} ${ORANGE}[--enable|-e|--disable|-d]${RESET}"
+                txt "      ${ORANGE}--enable, -e:${RESET} Enable the firewall."
+                txt "      ${ORANGE}--disable, -d:${RESET} Disable the firewall."
                 ;;
 
             *)
@@ -383,6 +390,9 @@ EOF
             PORTAINER=true
         fi
 
+        info "Setting up working directories\n"
+        ssh $hostname "mkdir -p /home/$username/containers_data" || warning "Failed to create working directories"
+
         info "Checking if Docker is installed\n"
         if ! ssh $hostname "command -v docker >/dev/null 2>&1"; then
             ssh $hostname "curl -fsSL https://get.docker.com | sh" || error "Failed to install Docker on $hostname" || return 1
@@ -482,10 +492,61 @@ EOF
     	success "Git is now set up on $hostname\n"
     }
 
-    function security() {
+    # Sets up a firewall on the Raspberry Pi.
+    # $1: Enable or disable the firewall.
+    function firewall() {
+        description firewall "sets up a custom firewall on the Raspberry Pi."
 
+        info "Getting the username and hostname from the host.json file.\n"
+        get-host-info || error "Failed to get the username and hostname. Consider running 'rpi link <username> <hostname>' first." || return 1
+
+        show-link
+
+        ENABLE=false
+        DISABLE=false
+
+        if [[ "$1" == "--enable" || "$1" == "-e" ]]; then
+            ENABLE=true
+        elif [[ "$1" == "--disable" || "$1" == "-d" ]]; then
+            DISABLE=true
+        else
+            warning "No option specified, only setting up UFW...\n"
+            sleep 2
+        fi
+
+        if ssh $hostname "command -v ufw >/dev/null 2>&1"; then
+            warning "UFW is already installed on $hostname.\n"
+            ssh $hostname "ufw status" || error "Failed to get UFW status" || return 1
+        else 
+            info "Installing UFW...\n"
+	        ssh $hostname "sudo apt-get install ufw -y" || error "Failed to install UFW on $hostname" || return 1
+
+	        info "Setting up UFW on $hostname:"
+            info "Denying all incoming connections...\n"
+	        ssh $hostname "sudo ufw default deny incoming" || error "Failed to deny all incoming connections" || return 1
+
+            info "Allowing all outgoing connections...\n"
+	        ssh $hostname "sudo ufw default allow outgoing" || error "Failed to allow all outgoing connections" || return 1
+
+            info "Allowing SSH connections and limiting them (prevent from bruteforce)...\n"
+	        ssh $hostname "sudo ufw allow ssh" || error "Failed to allow SSH connections" || return 1
+	        ssh $hostname "sudo ufw limit ssh" || error "Failed to limit SSH connections" || return 1
+        fi
+
+        if [ "$ENABLE" = true ]; then
+            info "Enabling UFW...\n"
+            ssh $hostname "sudo ufw enable" || error "Failed to enable UFW" || return 1
+
+            success "UFW is now running\n"
+        elif [ "$DISABLE" = true ]; then
+            info "Disabling UFW...\n"
+            ssh $hostname "sudo ufw disable" || error "Failed to disable UFW" || return 1
+
+            success "UFW is now disabled\n"
+        else
+            success "UFW is now set up on $hostname\n"
+        fi
     }
-
 
     case $# in
     0)
@@ -500,7 +561,7 @@ EOF
                 init
                 ;;
             link)
-                info "Usage: rpi link <username> <hostname>"
+                error "Usage: ${BLUE}rpi link ${RED}<username> <hostname>${RESET}"
                 ;;
             unlink)
                 unlink
@@ -515,80 +576,93 @@ EOF
                 docker
                 ;;
             git)
-                info "Usage: rpi git <email>"
+                error "Usage: ${BLUE}rpi git ${RED}<email>${RESET}"
+                ;;
+            firewall)
+                firewall
                 ;;
             *)
-                error "Unknown command: $1"
+                error "Unknown command: \"$1\""
                 ;;
         esac
         ;;
     2)
         case $1 in
             help)
-                info "Usage: rpi help"
+                error "Usage: ${BLUE}rpi help"
                 ;;
             init)
-                info "Usage: rpi init"
+                error "Usage: ${BLUE}rpi init"
                 ;;
             link)
-                info "Usage: rpi link <username> <hostname>"
+                error "Usage: ${BLUE}rpi link ${RED}<username> <hostname>${RESET}"
                 ;;
             unlink)
-                info "Usage: rpi unlink"
+                error "Usage: ${BLUE}rpi unlink"
                 ;;
             ssh)
                 add-ssh $2
                 ;;
             env)
-                info "Usage: rpi env"
+                error "Usage: ${BLUE}rpi env"
                 ;;
             docker)
                 if [[ "$2" == "--portainer" || "$2" == "-p" ]]; then
                     docker $2
                 else 
-                    error "Unknown option: $2"
+                    error "Unknown option: \"$2\""
                 fi
                 ;;
             git)
                 setup-git $2
                 ;;
+            firewall)
+                if [[ "$2" == "--enable" || "$2" == "-e" || "$2" == "--disable" || "$2" == "-d" ]]; then
+                    firewall $2
+                else 
+                    error "Unknown option: \"$2\""
+                fi
+                ;;
             *)
-                error "Unknown command: $1"
+                error "Unknown command: \"$1\""
                 ;;
         esac
         ;;
     *)
         case $1 in
             help)
-                info "Usage: rpi help"
+                error "Usage: ${BLUE}rpi help"
                 ;;
             init)
-                info "Usage: rpi init"
+                error "Usage: ${BLUE}rpi init"
                 ;;
             link)
                 if [ $# -eq 3 ]; then
                     link $2 $3
                 else
-                    info "Usage: rpi link <username> <hostname>"
+                    error "Usage: ${BLUE}rpi link ${RED}<username> <hostname>${RESET}"
                 fi
                 ;;
             unlink)
                 unlink
                 ;;
             ssh)
-                info "Usage: rpi ssh [passphrase]"
+                error "Usage: ${BLUE}rpi ssh ${ORANGE}[passphrase]${RESET}"
                 ;;
             env)
                 env
                 ;;
             docker)
-                info "Usage: rpi docker [--portainer|-p]"
+                error "Usage: ${BLUE}rpi docker ${ORANGE}[--portainer|-p${RESET}"
                 ;;
             git)
-                info "Usage: rpi git <email>"
+                error "Usage: ${BLUE}rpi git ${RED}<email>${RESET}"
+                ;;
+            firewall)
+                error "Usage: ${BLUE}rpi firewall ${ORANGE}[--enable|-e|--disable|-d]${RESET}"
                 ;;
             *)
-                error "Unknown command: $1"
+                error "Unknown command: \"$1\""
                 ;;
         esac
         ;;
