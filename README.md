@@ -1,6 +1,6 @@
-# Repository-Template
+# Raspberry Pi Setup Wizard
 
-> Add a short description of the project here.
+> All-in-one script to setup a Raspberry Pi as a server/homelab.
 
 ![screenshot](./assets/img/screenshot.jpg)
 
@@ -8,97 +8,142 @@
 
 ### Introduction
 
+Raspberry Pi Setup Wizard is an all-in-one script to setup a Raspberry Pi as a server/homelab. It is designed to be run on a fresh install of Raspberry Pi OS Lite/Desktop. Pay attention to the prerequisites and the install section before running the script.
+
+
 NEED JQ
-
-
-Provide an introduction to the project. This section should be short and concise. It may include a link to an important [reference](https://example.com).
 
 ### Prerequisites
 
-- Define tools and libraries that are required to run the project with the version number.
-- If available, provide a link to the installation guide.
+- Hardware:
+  - Raspberry Pi 3/4/Zero
+  - MicroSD card (8GB or more)
+  - Power supply
+  - Ethernet cable or Wi-Fi connectivity
+- Software:
+  - Raspberry Pi OS Lite/Desktop flashed from [Raspberry Pi Imager](https://www.raspberrypi.org/software/)
+  - SSH enabled
+  - Internet connection
+- Host machine:
+  - macOS (ideal) with [Homebrew](https://brew.sh/) and [Git](https://git-scm.com/) installed
+  - Linux (not tested, **may** require changes)
+  - Windows (not tested, **will** require changes)
 
 ### Install
 
-Details here explicit instructions to install the project.
-
-Here are the info blocks available for github markdown:
-
 > [!NOTE]
-> Do not hesitate to add a note if necessary.
+> The installation process is intended for macOS users. Linux and Windows users are welcome to contribute to the project by providing the necessary changes.
 
-> [!TIP]
-> Do not hesitate to add a tip if necessary.
+First we need to install the required dependency:
 
-> [!WARNING]
-> Do not hesitate to add a warning if necessary.
+```bash
+brew install jq
+```
 
-> [!IMPORTANT]
-> Do not hesitate to add an important note if necessary.
+Then, we will clone the project to a local permanent directory:
+
+```bash
+cd ~ # Optional
+```
+
+```bash
+git clone https://github.com/MorganKryze/RaspberryPi-Setup-Wizard.git
+cd RaspberryPi-Setup-Wizard
+```
 
 > [!CAUTION]
-> Do not hesitate to add a caution if necessary.
+> The location should be permanent as the script will be run from this directory. Its value will be stored in the ~/.zshrc file (you may change it to ~/.bashrc if you are using bash).
 
-### Build & Run
+Finally, we will run the script and follow the instructions:
 
-Detail here the instructions to build and run the project.
+```bash
+source src/rpi-wizard.sh ; rpi init
+```
+
+Once finished, restart your terminal and run the following command to confirm the installation:
+
+```bash
+rpi
+```
+
+If it displays the welcome message, the installation was successful.
 
 ### Usage
 
-Detail here the instructions to use the project.
+#### Format
 
-### Troubleshooting
+The commands are decomposed as:
 
-Detail here the troubleshooting of the project.
+```bash
+rpi <command> <options>
+```
+
+#### Help
+
+The help command will display the available commands and their usage:
+
+```bash
+rpi help
+```
+
+Or:
+
+```bash
+rpi help <command>
+```
+
+#### Commands
+
+- `help`: Display the help message.
+- `init`: Initialize the script.
+- `update`: Update the script.
+- `link`: Store the Raspberry Pi username and hostname.
+- `unlink`: Remove the stored Raspberry Pi username and hostname.
+- `connect`: Connect to the Raspberry Pi.
+- `ssh`: Add the SSH key to the Raspberry Pi.
+- `env`: Set up the Raspberry Pi environment.
+- `docker`: Install Docker on the Raspberry Pi.
+- `git`: Set up Git on the Raspberry Pi to push/pull repositories.
+- `firewall`: Set up the firewall on the Raspberry Pi.
 
 ### Project structure
 
-Here are the most important files and directories of the project (you may ignore the other files and directories):
-
 ```plaintext
-Repository-Template
+RaspberryPi-Setup-Wizard
+├── .github
 ├── src
-│   ├── assets
-│   │   └── img
-│   │       └── screenshot.png
-│   └── project-code.sh
+│   └── rpi-wizard.sh
+├── conf
+│   ├── 20auto-upgrades
+│   └── 50unattended-upgrades
+├── assets
+│   └── img
+│       └── screenshot.jpg
 ├── .gitignore
-├── SECURITY
-├── CODE_OF_CONDUCT
-├── CONTRIBUTING
 ├── LICENCE
 └── README.md
 ```
 
-#### Small descriptives
+#### Small descriptive
 
 ##### `src/`
 
-This directory contains the source code of the project.
+This directory contains the executable script of the project.
 
-##### `src/assets/`
+##### `config/`
 
-This directory contains the assets of the project.
-
-##### Files
-
-If necessary, provide a description of the most important files of the project.
+This directory contains the configuration files for the unattended-upgrades config.
 
 ## Supported platforms
 
-- Precise here the platforms that are supported by the project.
-- If available, provide a link to the installation guide.
-- If in testing, do not hesitate to mention it.
-
-## Supported languages
-
-- Precise here the languages that are supported by the project.
-- If necessary, precise if some languages needs to be checked.
+- macOS (ideal)
+- Linux (not tested, **may** require changes)
+- Windows (not tested, **will** require changes)
 
 ## Future improvements
 
-- Precise here the future improvements that are planned for the project.
-- ~~Imporvement done can be styled like this.~~
+- Linux & Windows compatibility.
+- More customization options & features (*feel free to suggest some*).
 
 ## Contributing
 
