@@ -10,9 +10,6 @@
 
 Raspberry Pi Setup Wizard is an all-in-one script to setup a Raspberry Pi as a server/homelab. It is designed to be run on a fresh install of Raspberry Pi OS Lite/Desktop. Pay attention to the prerequisites and the install section before running the script.
 
-
-NEED JQ
-
 ### Prerequisites
 
 - Hardware:
