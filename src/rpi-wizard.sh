@@ -592,6 +592,14 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
             warning "unattended-upgrades is already installed. Skipping..."
         fi
 
+        info "Adding exFAT support..."
+        if ! ssh $hostname "command -v exfat-fuse >/dev/null 2>&1"; then
+            ssh $hostname "sudo apt-get install exfat-fuse -y" || error "Failed to install exFAT support." || return 1
+            ssh $hostname "sudo apt-get install exfatprogs -y" || error "Failed to install exfatprogs." || return 1
+        else 
+            warning "exFAT support is already installed. Skipping..."
+        fi
+        
 	    info "Removing 'NO WARRANTY' welcome message..."
 	    ssh $hostname "touch ~/.hushlogin"
 
