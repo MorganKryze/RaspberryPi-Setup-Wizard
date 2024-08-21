@@ -139,7 +139,7 @@ function rpi() {
 
         info "Available commands:"
         
-        for func in help init link unlink connect ssh env docker git firewall; do
+        for func in help init update link unlink connect ssh env docker git firewall; do
             blue "  $func"
             case "$func" in
             "help")
@@ -147,6 +147,9 @@ function rpi() {
                 ;;
             "init")
                 green "    Add the Raspberry Pi Wizard to the shell path."
+                ;;
+            "update")
+                green "    Update the Raspberry Pi Wizard by pulling the latest changes from the repository."
                 ;;
             "link")
                 green "    Link the Raspberry Pi to a username and hostname."
@@ -197,6 +200,11 @@ function rpi() {
                 blue "  init:"
                 green "    Add the Raspberry Pi Wizard to the shell path."
                 txt "    Usage: ${BLUE}rpi init${RESET}"
+                ;;
+            update)
+                blue "  update:"
+                green "    Update the Raspberry Pi Wizard by pulling the latest changes from the repository."
+                txt "    Usage: ${BLUE}rpi update${RESET}"
                 ;;
             link)
                 blue "  link:"
@@ -255,7 +263,7 @@ function rpi() {
             intro 
 
             info "Available commands:"
-            for func in help init link unlink connect ssh env docker git firewall; do
+            for func in help init update link unlink connect ssh env docker git firewall; do
                 blue "  $func:"
                 case "$func" in
                 "help")
@@ -263,59 +271,53 @@ function rpi() {
                     txt "    Usage: ${BLUE}rpi help ${ORANGE}[command]${RESET}"
                     txt "      ${ORANGE}command:${RESET} The command name to display the help text."
                     ;;
-
                 "init")
                     green "    Add the Raspberry Pi Wizard to the shell path."
                     txt "    Usage: ${BLUE}rpi init${RESET}"
                     ;;
-
+                "update")
+                    green "    Update the Raspberry Pi Wizard by pulling the latest changes from the repository."
+                    txt "    Usage: ${BLUE}rpi update${RESET}"
+                    ;;
                 "link")
                     green "    Link the Raspberry Pi to a username and hostname."
                     txt "    Usage: ${BLUE}rpi link${RESET} ${RED}<username> <hostname>${RESET}"
                     txt "      ${RED}username:${RESET} The username of the Raspberry Pi."
                     txt "      ${RED}hostname:${RESET} The hostname of the Raspberry Pi."
                     ;;
-
                 "unlink")
                     green "    Unlink the Raspberry Pi from a username and hostname."
                     txt "    Usage: ${BLUE}rpi unlink${RESET}"
                     ;;
-
                 "connect")
                     green "    Connect to the Raspberry Pi using SSH."
                     txt "    Usage: ${BLUE}rpi connect${RESET}"
                     ;;
-
                 "ssh")
                     green "    Add an SSH key to the Raspberry Pi."
                     txt "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET}"
                     txt "      ${ORANGE}passphrase:${RESET} The passphrase for the SSH key."
                     ;;
-
                 "env")
                     green "    Set up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases."
                     txt "    Usage: ${BLUE}rpi env${RESET}"
                     ;;
-
                 "docker")
                     green "    Set up Docker on the Raspberry Pi."
                     txt "    Usage: ${BLUE}rpi docker${RESET} ${ORANGE}[--portainer|-p]${RESET}"
                     txt "      ${ORANGE}--portainer, -p:${RESET} Install Portainer alongside docker to manage containers."
                     ;;
-
                 "git")
                     green "    Configure git on the Raspberry Pi to a specific account."
                     txt "    Usage: ${BLUE}rpi git${RESET} ${RED}<email>${RESET}"
                     txt "      ${RED}email:${RESET} The email for the git configuration."
                     ;;
-
                 "firewall")
                     green "    Set up a custom firewall on the Raspberry Pi."
                     txt "    Usage: ${BLUE}rpi firewall${RESET} ${ORANGE}[--enable|-e|--disable|-d]${RESET}"
                     txt "      ${ORANGE}--enable, -e:${RESET} Enable the firewall."
                     txt "      ${ORANGE}--disable, -d:${RESET} Disable the firewall."
                     ;;
-
                 *)
                     error "Command not found. No help text available."
                     ;;
@@ -330,6 +332,7 @@ function rpi() {
     function init() {
         description init "adds the Raspberry Pi Wizard shell script to your terminal path (MacOS)."
 
+        info "Adding the Raspberry Pi Wizard to your terminal path..."
         declare -g project_path=$(pwd)
         script_path=$project_path/src/rpi-wizard.sh
 
@@ -352,7 +355,20 @@ function rpi() {
         fi
 
         success "Ensure that the first path ends with ${ORANGE}'.../RaspberryPi-Setup-Wizard/src/rpi-wizard.sh'${RESET}."
-}
+    }
+
+    # Updates the Raspberry Pi Wizard by pulling the latest changes from the repository.
+    function rpi-update() {
+        description update "updates the Raspberry Pi Wizard by pulling the latest changes from the repository."
+
+        info "Updating the Raspberry Pi Wizard..."
+        cd $RPI_SETUP_WIZARD_PATH || error "Failed to change directory to the Raspberry Pi Wizard." || return 1
+        git pull origin main || error "Failed to update the Raspberry Pi Wizard." || return 1
+
+        cd - || error "Failed to change directory back to the previous location." || return 1
+
+        success "The Raspberry Pi Wizard has been updated."
+    }
 
     # Stores the username and hostname in a JSON file.
     # $1: The username of the Raspberry Pi.
@@ -750,6 +766,9 @@ EOF
             init)
                 init
                 ;;
+            update)
+                rpi-update
+                ;;
             link)
                 error "Usage: ${BLUE}rpi link ${RED}<username> <hostname>${RESET}"
                 ;;
@@ -786,6 +805,9 @@ EOF
                 ;;
             init)
                 error "Usage: ${BLUE}rpi init"
+                ;;
+            update)
+                error "Usage: ${BLUE}rpi update"
                 ;;
             link)
                 error "Usage: ${BLUE}rpi link ${RED}<username> <hostname>${RESET}"
@@ -831,6 +853,9 @@ EOF
                 ;;
             init)
                 error "Usage: ${BLUE}rpi init"
+                ;;
+            update)
+                error "Usage: ${BLUE}rpi update"
                 ;;
             link)
                 if [ $# -eq 3 ]; then
