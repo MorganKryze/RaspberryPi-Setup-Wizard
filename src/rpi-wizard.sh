@@ -393,7 +393,7 @@ function rpi() {
 
         show-link
 
-        info "Connecting to $hostname..."
+        info "Connecting to $hostname...\n"
         ssh $hostname
     }
 
