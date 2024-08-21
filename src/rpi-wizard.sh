@@ -275,7 +275,7 @@ function rpi() {
             intro 
 
             info "Available commands:"
-            for func in help init update link unlink connect ssh env docker git firewall; do
+            for func in help init update link unlink connect ssh env docker git firewall usb; do
                 blue "  $func:"
                 case "$func" in
                 "help")
@@ -330,6 +330,13 @@ function rpi() {
                     txt "    Usage: ${BLUE}rpi firewall${RESET} ${ORANGE}[--enable|-e|--disable|-d]${RESET}"
                     txt "      ${ORANGE}--enable, -e:${RESET} Enable the firewall."
                     txt "      ${ORANGE}--disable, -d:${RESET} Disable the firewall."
+                    ;;
+                "usb")
+                    green "    Add a USB device to the Raspberry Pi that will be auto mounted at boot."
+                    txt "    Usage: ${BLUE}rpi usb${RESET} ${RED}<UUID> <mountpoint> <fstype>${RESET}"
+                    txt "      ${RED}UUID:${RESET} The UUID of the USB device ('sudo blkid' to get it)."
+                    txt "      ${RED}mountpoint:${RESET} The mountpoint for the device"
+                    txt "      ${RED}fstype:${RESET} The filesystem type (exFAT, ext4, ntfs)."
                     ;;
                 *)
                     error "Command not found. No help text available."
