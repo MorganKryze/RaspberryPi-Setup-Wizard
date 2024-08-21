@@ -226,8 +226,9 @@ function rpi() {
             ssh)
                 blue "  ssh:"
                 green "    Add an SSH key to the Raspberry Pi."
-                txt "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET}"
+                txt "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET} ${ORANGE}[--fail2ban|-f]${RESET}"
                 txt "      ${ORANGE}passphrase:${RESET} The passphrase for the SSH key."
+                txt "      ${ORANGE}--fail2ban, -f:${RESET} Install fail2ban alongside the SSH key."
                 ;;
             env)
                 blue "  env:"
@@ -295,8 +296,9 @@ function rpi() {
                     ;;
                 "ssh")
                     green "    Add an SSH key to the Raspberry Pi."
-                    txt "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET}"
+                    txt "    Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET} ${ORANGE}[--fail2ban|-f]${RESET}"
                     txt "      ${ORANGE}passphrase:${RESET} The passphrase for the SSH key."
+                    txt "      ${ORANGE}--fail2ban, -f:${RESET} Install fail2ban alongside the SSH key."
                     ;;
                 "env")
                     green "    Set up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases."
@@ -415,6 +417,7 @@ function rpi() {
 
     # Adds an SSH key to the Raspberry Pi.
     # $1: The passphrase for the SSH key.
+    # $2: Wether to install fail2ban or not.
     function add-ssh() {
         description ssh "adds an SSH key to the Raspberry Pi for passwordless login."
 
@@ -422,27 +425,80 @@ function rpi() {
         get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
         
         show-link
-        
-    	info "Creating new SSH key..."
-        ssh-keygen -f /Users/$global_user/.ssh/$hostname -C "$hostname" -N "$1" || error "Failed to create new SSH key." || return 1
 
-    	info "Copying SSH key to $hostname, you will need to enter the password for $usr..."
-    	sleep 2
-        ssh-copy-id -o StrictHostKeyChecking=no -i /Users/$global_user/.ssh/$hostname.pub $usr@$hostname.local || error "Failed to copy SSH key to $hostname." || return 1
+        PASSPHRASE=""
+        FAIL2BAN=false
+        if [ $# -eq 1 ]; then
+            if [[ "$1" == "--fail2ban" || "$1" == "-f" ]]; then
+                FAIL2BAN=true
+            else
+                PASSPHRASE=$1
+            fi
 
-    	info "Adding $hostname to ~/.ssh/config file..."
-        tempfile=$(mktemp)
-        cat <<EOF > "$tempfile"
+        elif [ $# -eq 2 ]; then
+            if [[ "$1" == "--fail2ban" || "$1" == "-f" ]]; then
+                FAIL2BAN=true
+                PASSPHRASE=$2
+            elif [[ "$2" == "--fail2ban" || "$2" == "-f" ]]; then
+                FAIL2BAN=true
+                PASSPHRASE=$1
+            else
+                error "Invalid arguments. Usage: ${BLUE}rpi ssh${RESET} ${ORANGE}[passphrase]${RESET} ${ORANGE}[--fail2ban|-f]${RESET}" || return 1
+            fi
+        fi
+
+        if ssh $hostname "command -v python >/dev/null 2>&1"; then
+            warning "SSH key already exists on $hostname. Skipping..."
+        else
+            info "Creating new SSH key..."
+            ssh-keygen -f /Users/$global_user/.ssh/$hostname -C "$hostname" -N "$PASSPHRASE" || error "Failed to create new SSH key." || return 1
+
+    	    info "Copying SSH key to $hostname, you will need to enter the password for $usr..."
+    	    sleep 2
+            ssh-copy-id -o StrictHostKeyChecking=no -i /Users/$global_user/.ssh/$hostname.pub $usr@$hostname.local || error "Failed to copy SSH key to $hostname." || return 1
+
+    	    info "Adding $hostname to ~/.ssh/config file..."
+            tempfile=$(mktemp)
+            cat <<EOF > "$tempfile"
 Host $hostname
   HostName $hostname.local
   User $usr
   IdentityFile ~/.ssh/$hostname
 
 EOF
-        cat ~/.ssh/config >> "$tempfile"
-        mv "$tempfile" ~/.ssh/config
+            cat ~/.ssh/config >> "$tempfile"
+            mv "$tempfile" ~/.ssh/config
 
-    	success "You can now SSH into $hostname with 'ssh $hostname'."
+    	    success "You can now SSH into $hostname with 'ssh $hostname' or 'rpi connect'."
+        fi
+
+        if [ "$FAIL2BAN" = true ]; then
+            if ssh $hostname "command -v fail2ban-client >/dev/null 2>&1"; then
+                warning "fail2ban is already installed on $hostname. Skipping..."
+            else
+                
+                info "Installing fail2ban on $hostname..."
+                ssh $hostname "sudo apt-get install fail2ban -y" || error "Failed to install fail2ban on $hostname." || return 1
+
+                info "Configuring fail2ban..."
+                ssh $hostname "sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local" || error "Failed to copy jail.conf to jail.local." || return 1
+                ssh $hostname "sudo sed -i '/\[sshd\]/,+8d' /etc/fail2ban/jail.local" || error "Failed to remove previous SSH configuration" || return 1
+                ssh $hostname "sudo echo '[sshd]
+enabled = true
+filter = sshd
+port = ssh
+banaction = iptables-multiport
+bantime = -1
+maxretry = 3
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" || error "Failed to add SSH configuration to fail2ban." || return 1
+
+                info "Restarting fail2ban..."
+                ssh $hostname "sudo service fail2ban restart" || error "Failed to restart fail2ban." || return 1
+
+                success "fail2ban is now running on $hostname."
+            fi
+        fi
     }
 
     # Sets up the Raspberry Pi environment with ZSH, Oh My Zsh, Git, Neofetch, LSD, and custom aliases.
@@ -871,7 +927,11 @@ EOF
                 error "Usage: ${BLUE}rpi connect"
                 ;;
             ssh)
-                error "Usage: ${BLUE}rpi ssh ${ORANGE}[passphrase]${RESET}"
+                if [ $# -eq 3 ]; then
+                    add-ssh $2 $3
+                else
+                    error "Usage: ${BLUE}rpi ssh ${ORANGE}[passphrase]${RESET} ${ORANGE}[--fail2ban|-f]${RESET}"
+                fi
                 ;;
             env)
                 env
