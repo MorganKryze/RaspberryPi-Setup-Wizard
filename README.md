@@ -83,7 +83,7 @@ The help command will display the available commands and their usage:
 rpi help
 ```
 
-Or:
+Or
 
 ```bash
 rpi help <command>
