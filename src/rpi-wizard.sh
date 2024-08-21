@@ -408,11 +408,11 @@ function rpi() {
         show-link
         
     	info "Creating new SSH key..."
-        ssh-keygen -f /Users/$global_user/.ssh/$hostname -C "$hostname" -N "$1"
+        ssh-keygen -f /Users/$global_user/.ssh/$hostname -C "$hostname" -N "$1" || error "Failed to create new SSH key." || return 1
 
     	info "Copying SSH key to $hostname, you will need to enter the password for $usr..."
     	sleep 2
-        ssh-copy-id -o StrictHostKeyChecking=no -i /Users/$global_user/.ssh/$hostname.pub $usr@$hostname.local
+        ssh-copy-id -o StrictHostKeyChecking=no -i /Users/$global_user/.ssh/$hostname.pub $usr@$hostname.local || error "Failed to copy SSH key to $hostname." || return 1
 
     	info "Adding $hostname to ~/.ssh/config file..."
         tempfile=$(mktemp)
@@ -443,8 +443,8 @@ EOF
 
 	    info "Installing ZSH..."
 	    if ! ssh $hostname "command -v zsh >/dev/null 2>&1"; then
-	    	ssh $hostname "sudo apt-get install zsh -y"
-	    	ssh $hostname "chsh -s $(which zsh)"
+	    	ssh $hostname "sudo apt-get install zsh -y" || error "Failed to install ZSH." || return 1
+	    	ssh $hostname "chsh -s $(which zsh)" || error "Failed to set ZSH as the default shell." || return 1
         else 
             warning "ZSH is already installed. Skipping..."
             ssh $hostname "zsh --version"
@@ -452,18 +452,18 @@ EOF
 
 	    info "Installing Git..."
 	    if ! ssh $hostname "command -v git >/dev/null 2>&1"; then
-	    	ssh $hostname "sudo apt-get install git -y"
+	    	ssh $hostname "sudo apt-get install git -y" || error "Failed to install Git." || return 1
         else 
             warning "Git is already installed. Skipping..."
             ssh $hostname "git --version"
 	    fi
 
 	    info "Installing Oh My Zsh..."
-	    if ssh $hostname "[ ! -d \"~/.oh-my-zsh\" ]"; then
-	    	ssh $hostname "sh -c $(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-	    	ssh $hostname "sed -i '/ZSH_THEME=/d' ~/.zshrc && sed -i '1iZSH_THEME=\"candy\"' ~/.zshrc"
+	    if ssh $hostname "command -v omz >/dev/null 2>&1"; then
+	    	ssh $hostname "sh -c $(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || error "Failed to install Oh My Zsh." || return 1
+	    	ssh $hostname "sed -i '/ZSH_THEME=/d' ~/.zshrc && sed -i '1iZSH_THEME=\"candy\"' ~/.zshrc" || error "Failed to set ZSH_THEME." || return 1
 
-	    	ssh $hostname "sudo chown -R 1000:1000 ~/.oh-my-zsh"
+	    	ssh $hostname "sudo chown -R 1000:1000 ~/.oh-my-zsh" || error "Failed to change ownership of Oh My Zsh." || return 1
 	    	ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-autosuggestions /home/$username/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
 	    	ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /home/$username/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
 
@@ -475,7 +475,7 @@ EOF
 
 	    info "Installing Neofetch..."
 	    if ! ssh $hostname "command -v neofetch >/dev/null 2>&1"; then
-	    	ssh $hostname "sudo apt-get install neofetch -y"
+	    	ssh $hostname "sudo apt-get install neofetch -y" || error "Failed to install Neofetch." || return 1
 	    	ssh $hostname "echo neofetch >> ~/.zshrc"
         else 
             warning "Neofetch is already installed. Skipping..."
@@ -484,7 +484,7 @@ EOF
 
 	    info "Installing lsd..."
 	    if ! ssh $hostname "command -v lsd >/dev/null 2>&1"; then
-	    	ssh $hostname "sudo apt-get install lsd -y"
+	    	ssh $hostname "sudo apt-get install lsd -y" || error "Failed to install lsd." || return 1
         else 
             warning "lsd is already installed. Skipping..."
             ssh $hostname "lsd --version"
@@ -492,20 +492,38 @@ EOF
 
         info "Adding aliases and .zshenv..."
         if ! ssh $hostname "test -f ~/.aliases"; then
-            ssh $hostname "curl -O $ALIASES_PATH > ~/.aliases"
+            ssh $hostname "curl -O $ALIASES_PATH > ~/.aliases" || error "Failed to add aliases file." || return 1
         else 
             warning "Aliases file already exists. Skipping..."
         fi
         if ! ssh $hostname "test -f ~/.zshenv"; then
-            ssh $hostname "curl -O $ZSHENV_PATH > ~/.zshenv"
+            ssh $hostname "curl -O $ZSHENV_PATH > ~/.zshenv" || error "Failed to add .zshenv file." || return 1
         else
             warning ".zshenv file already exists. Skipping..."
+        fi
+
+        info "Installing unattended-upgrades..."
+        if ! ssh $hostname "command -v unattended-upgrades >/dev/null 2>&1"; then
+            ssh $hostname "sudo apt-get install unattended-upgrades -y" || error "Failed to install unattended-upgrades." || return 1
+
+            info "Removing previous configuration..."
+            ssh $hostname "sudo rm /etc/apt/apt.conf.d/20auto-upgrades" || error "Failed to remove 20auto-upgrades. Please check permissions." || return 1
+            ssh $hostname "sudo rm /etc/apt/apt.conf.d/50unattended-upgrades"
+
+            info "Adding new configuration..."
+            ssh $hostname "sudo curl -O https://raw.githubusercontent.com/MorganKryze/RaspberryPi-Setup-Wizard/main/conf/20auto-upgrades > /etc/apt/apt.conf.d/20auto-upgrades" || error "Failed to add 20auto-upgrades. Please check permissions." || return 1
+            ssh $hostname "sudo curl -O https://raw.githubusercontent.com/MorganKryze/RaspberryPi-Setup-Wizard/main/conf/50unattended-upgrades > /etc/apt/apt.conf.d/50unattended-upgrades" || error "Failed to add 50unattended-upgrades. Please check permissions." || return 1
+
+            info "Enabling unattended-upgrades..."
+            ssh $hostname "sudo unattended-upgrade -d" || error "Failed to enable unattended-upgrades." || return 1
+        else 
+            warning "unattended-upgrades is already installed. Skipping..."
         fi
 
 	    info "Removing 'NO WARRANTY' welcome message..."
 	    ssh $hostname "touch ~/.hushlogin"
 
-	    warning "Rebooting in 5 sec, please wait a few moments.\n"
+	    warning "Rebooting in 5 sec, please wait a few moments."
 	    sleep 5
 	    ssh $hostname "sudo reboot"
 

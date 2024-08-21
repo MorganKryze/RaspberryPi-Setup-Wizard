@@ -1,0 +1,45 @@
+Unattended-Upgrade::Origins-Pattern {
+	"origin=Debian,codename=${distro_codename},label=Debian";
+	"origin=Debian,codename=${distro_codename},label=Debian-Security";
+	"origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+
+	"origin=Raspbian,codename=${distro_codename},label=Raspbian";
+    "origin=Raspberry Pi Foundation,codename=${distro_codename},label=Raspberry Pi Foundation";
+};
+
+Unattended-Upgrade::Package-Blacklist {
+};
+
+// This option allows you to control if on a unclean dpkg exit
+// unattended-upgrades will automatically run
+//   dpkg --force-confold --configure -a
+// The default is true, to ensure updates keep getting installed
+Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+
+// Send email to this address for problems or packages upgrades
+// If empty or unset then no email is sent, make sure that you
+// have a working mail setup on your system. A package that provides
+// 'mailx' must be installed. E.g. "user@example.com"
+Unattended-Upgrade::Mail "morgan@kodelab.fr";
+
+// Set this value to one of:
+//    "always", "only-on-error" or "on-change"
+// If this is not set, then any legacy MailOnlyOnError (boolean) value
+// is used to chose between "only-on-error" and "on-change"
+Unattended-Upgrade::MailReport "only-on-error";
+
+// Automatically reboot *WITHOUT CONFIRMATION* if
+//  the file /var/run/reboot-required is found after the upgrade
+Unattended-Upgrade::Automatic-Reboot "true";
+
+// Automatically reboot even if there are users currently logged in
+// when Unattended-Upgrade::Automatic-Reboot is set to true
+Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
+
+// If automatic reboot is enabled and needed, reboot at the specific
+// time instead of immediately
+//  Default: "now"
+Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+
+// Allow package downgrade if Pin-Priority exceeds 1000
+Unattended-Upgrade::Allow-downgrade "true";
