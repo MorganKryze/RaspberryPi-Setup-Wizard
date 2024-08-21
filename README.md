@@ -102,6 +102,7 @@ rpi help <command>
 - `docker`: Install Docker on the Raspberry Pi.
 - `git`: Set up Git on the Raspberry Pi to push/pull repositories.
 - `firewall`: Set up the firewall on the Raspberry Pi.
+- `usb`: Set up the USB drive on the Raspberry Pi to automatically mount it at boot.
 
 ### Project structure
 

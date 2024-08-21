@@ -139,7 +139,7 @@ function rpi() {
 
         info "Available commands:"
         
-        for func in help init update link unlink connect ssh env docker git firewall; do
+        for func in help init update link unlink connect ssh env docker git firewall usb; do
             blue "  $func"
             case "$func" in
             "help")
@@ -174,6 +174,9 @@ function rpi() {
                 ;;
             "firewall")
                 green "    Set up a custom firewall on the Raspberry Pi."
+                ;;
+            "usb")
+                green "    Add a USB device to the Raspberry Pi that will be auto mounted at boot."
                 ;;
             *)
                 error "  No help text available."
@@ -254,6 +257,14 @@ function rpi() {
                 txt "    Usage: ${BLUE}rpi firewall${RESET} ${ORANGE}[--enable|-e|--disable|-d]${RESET}"
                 txt "      ${ORANGE}--enable, -e:${RESET} Enable the firewall."
                 txt "      ${ORANGE}--disable, -d:${RESET} Disable the firewall."
+                ;;
+            usb)
+                blue "  usb:"
+                green "    Add a USB device to the Raspberry Pi that will be auto mounted at boot."
+                txt "    Usage: ${BLUE}rpi usb${RESET} ${RED}<UUID> <mountpoint> <fstype>${RESET}"
+                txt "      ${RED}UUID:${RESET} The UUID of the USB device ('sudo blkid' to get it)."
+                txt "      ${RED}mountpoint:${RESET} The mountpoint for the device"
+                txt "      ${RED}fstype:${RESET} The filesystem type (exFAT, ext4, ntfs)."
                 ;;
             *)
 
@@ -599,7 +610,7 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
         else 
             warning "exFAT support is already installed. Skipping..."
         fi
-        
+
 	    info "Removing 'NO WARRANTY' welcome message..."
 	    ssh $hostname "touch ~/.hushlogin"
 
@@ -817,6 +828,48 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
         fi
     }
 
+    # Add a USB device to the Raspberry Pi that will be auto mounted at boot.
+    # $1: The UUID of the device.
+    # $2: The mount point of the device.
+    # $3: The filesystem of the device.
+    function add-usb() {
+        description usb "adds a USB device to the Raspberry Pi that will be auto mounted at boot."
+
+        info "Getting the username and hostname from the host.json file..."
+        get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
+
+        show-link
+               
+        uuid_regex_pattern='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+        
+        info "Checking if the UUID is valid..."
+        if [[ "$1" =~ $uuid_regex_pattern ]]; then
+            info "Valid UUID."
+        else
+            error "UUID is not valid." || return 1
+        fi
+
+        info "Checking if the mount point exists..."
+        if [ -d "$2" ]; then
+            info "Mount point exists."
+        else
+            info "Creating mount point..."
+            ssh $hostname "sudo mkdir -p $2" || error "Failed to create mount point." || return 1
+        fi
+
+        info "Checking if the filesystem is among: exfat, ext4, ntfs..."
+        if [ "$3" == "exfat" ] || [ "$3" == "ext4" ] || [ "$3" == "ntfs" ]; then
+            info "Valid filesystem."
+        else
+            error "Filesystem is not valid. Please choose another." || return 1
+        fi
+
+        info "Adding the USB device to /etc/fstab..."
+        ssh $hostname "echo UUID=$1 $2 $3 defaults,auto,umask=000,users,rw,nofail 0 0 | sudo tee -a /etc/fstab" || error "Failed to add the USB device to /etc/fstab." || return 1
+
+        success "USB device with UUID $1 is now set up on $hostname and will be auto mounted at boot."
+    }
+
     case $# in
     0)
         intro
@@ -856,6 +909,9 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
                 ;;
             firewall)
                 firewall
+                ;;
+            usb)
+                error "Usage: ${BLUE}rpi usb ${RED}<UUID> <mount_point> <filesystem>${RESET}"
                 ;;
             *)
                 error "Unknown command: \"$1\""
@@ -905,6 +961,9 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
                     error "Unknown option: \"$2\""
                 fi
                 ;;
+            usb)
+                error "Usage: ${BLUE}rpi usb ${RED}<UUID> <mount_point> <filesystem>${RESET}"
+                ;;
             *)
                 error "Unknown command: \"$1\""
                 ;;
@@ -953,6 +1012,12 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
             firewall)
                 error "Usage: ${BLUE}rpi firewall ${ORANGE}[--enable|-e|--disable|-d]${RESET}"
                 ;;
+            usb)
+                if [ $# -eq 4 ]; then
+                    add-usb $2 $3 $4
+                else
+                    error "Usage: ${BLUE}rpi usb ${RED}<UUID> <mount_point> <filesystem>${RESET}"
+                fi
             *)
                 error "Unknown command: \"$1\""
                 ;;
