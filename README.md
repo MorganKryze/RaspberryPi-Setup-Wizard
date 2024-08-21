@@ -18,7 +18,7 @@ Raspberry Pi Setup Wizard is an all-in-one script to setup a Raspberry Pi as a s
   - Power supply
   - Ethernet cable or Wi-Fi connectivity
 - Software:
-  - Raspberry Pi OS Lite/Desktop flashed from [Raspberry Pi Imager](https://www.raspberrypi.org/software/)
+  - Raspberry Pi OS Lite/Desktop flashed from [Raspberry Pi Imager](https://www.raspberrypi.org/software/) (username & hostname has to be defined)
   - SSH enabled
   - Internet connection
 - Host machine:
