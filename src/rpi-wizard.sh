@@ -1025,6 +1025,7 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
                 else
                     error "Usage: ${BLUE}rpi usb ${RED}<UUID> <mount_point> <filesystem>${RESET}"
                 fi
+                ;;
             *)
                 error "Unknown command: \"$1\""
                 ;;
