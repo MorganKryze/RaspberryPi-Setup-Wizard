@@ -139,7 +139,7 @@ function rpi() {
 
         info "Available commands:"
         
-        for func in help init update link unlink connect ssh env docker git firewall usb; do
+        for func in help init update link unlink connect reboot ssh env docker git firewall usb; do
             blue "  $func"
             case "$func" in
             "help")
@@ -159,6 +159,9 @@ function rpi() {
                 ;;  
             "connect")
                 green "    Connect to the Raspberry Pi using SSH."
+                ;;
+            "reboot")
+                green "    Reboot the Raspberry Pi."
                 ;;
             "ssh")    
                 green "    Add an SSH key to the Raspberry Pi."
@@ -226,6 +229,11 @@ function rpi() {
                 green "    Connect to the Raspberry Pi using SSH."
                 txt "    Usage: ${BLUE}rpi connect${RESET}"
                 ;;
+            reboot)
+                blue "  reboot:"
+                green "    Reboot the Raspberry Pi."
+                txt "    Usage: ${BLUE}rpi reboot${RESET}"
+                ;;
             ssh)
                 blue "  ssh:"
                 green "    Add an SSH key to the Raspberry Pi."
@@ -275,7 +283,7 @@ function rpi() {
             intro 
 
             info "Available commands:"
-            for func in help init update link unlink connect ssh env docker git firewall usb; do
+            for func in help init update link unlink connect reboot ssh env docker git firewall usb; do
                 blue "  $func:"
                 case "$func" in
                 "help")
@@ -304,6 +312,10 @@ function rpi() {
                 "connect")
                     green "    Connect to the Raspberry Pi using SSH."
                     txt "    Usage: ${BLUE}rpi connect${RESET}"
+                    ;;
+                "reboot")
+                    green "    Reboot the Raspberry Pi."
+                    txt "    Usage: ${BLUE}rpi reboot${RESET}"
                     ;;
                 "ssh")
                     green "    Add an SSH key to the Raspberry Pi."
@@ -430,12 +442,31 @@ function rpi() {
         show-link
 
         info "Testing the connection to $hostname..."
-        if ! ssh $hostname "Connexion test passed!"; then
+        if ! ssh $hostname "echo Connexion test passed!"; then
             error "Failed to connect to $hostname. Consider checking if the Raspberry Pi is powered up and connected to the network." || return 1
         fi
 
         info "Connecting to $hostname...\n"
         ssh $hostname
+    }
+
+    # Reboots the Raspberry Pi.
+    function rpi-reboot() {
+        description reboot "reboots the Raspberry Pi."
+
+        info "Getting the username and hostname from the host.json file..."
+        get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
+
+        show-link
+
+        warning "Rebooting in 5 sec, please wait a few moments."
+	    sleep 5
+	    ssh $hostname "sudo reboot"
+
+	    info "Rebooting..."
+	    sleep 45
+
+	    success "$hostname is now ready to use."
     }
 
     # Adds an SSH key to the Raspberry Pi.
@@ -846,39 +877,39 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
     # $3: The filesystem of the device.
     function add-usb() {
         description usb "adds a USB device to the Raspberry Pi that will be auto mounted at boot."
-
+    
         info "Getting the username and hostname from the host.json file..."
         get-host-info || error "Failed to get the username and hostname. Consider running '${BLUE}rpi link ${RED}<username> <hostname>${RESET}' first." || return 1
-
+    
         show-link
-               
-        uuid_regex_pattern='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
-        
+    
+        uuid_regex_pattern='^[0-9a-fA-F]{4}-[0-9a-fA-F]{4}$'
+    
         info "Checking if the UUID is valid..."
         if [[ "$1" =~ $uuid_regex_pattern ]]; then
             info "Valid UUID."
         else
             error "UUID is not valid." || return 1
         fi
-
+    
         info "Checking if the mount point exists..."
-        if [ -d "$2" ]; then
+        if ssh $hostname "[ -d $2 ]"; then
             info "Mount point exists."
         else
             info "Creating mount point..."
             ssh $hostname "sudo mkdir -p $2" || error "Failed to create mount point." || return 1
         fi
-
+    
         info "Checking if the filesystem is among: exfat, ext4, ntfs..."
-        if [ "$3" == "exfat" ] || [ "$3" == "ext4" ] || [ "$3" == "ntfs" ]; then
+        if [ "$3" = "exfat" ] || [ "$3" = "ext4" ] || [ "$3" = "ntfs" ]; then
             info "Valid filesystem."
         else
             error "Filesystem is not valid. Please choose another." || return 1
         fi
-
+    
         info "Adding the USB device to /etc/fstab..."
         ssh $hostname "echo UUID=$1 $2 $3 defaults,auto,umask=000,users,rw,nofail 0 0 | sudo tee -a /etc/fstab" || error "Failed to add the USB device to /etc/fstab." || return 1
-
+    
         success "USB device with UUID $1 is now set up on $hostname and will be auto mounted at boot."
     }
 
@@ -906,6 +937,9 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
                 ;;
             connect)
                 connect
+                ;;
+            reboot)
+                rpi-reboot
                 ;;
             ssh)
                 add-ssh
@@ -949,6 +983,9 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
                 ;;
             connect)
                 error "Usage: ${BLUE}rpi connect"
+                ;;
+            reboot)
+                error "Usage: ${BLUE}rpi reboot"
                 ;;
             ssh)
                 add-ssh $2
@@ -1004,6 +1041,9 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
                 ;;
             connect)
                 error "Usage: ${BLUE}rpi connect"
+                ;;
+            reboot)
+                error "Usage: ${BLUE}rpi reboot"
                 ;;
             ssh)
                 if [ $# -eq 3 ]; then
