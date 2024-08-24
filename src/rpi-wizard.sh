@@ -429,6 +429,11 @@ function rpi() {
 
         show-link
 
+        info "Testing the connection to $hostname..."
+        if ! ssh $hostname "hostname"; then
+            error "Failed to connect to $hostname. Consider checking if the Raspberry Pi is powered up and connected to the network." || return 1
+        fi
+
         info "Connecting to $hostname...\n"
         ssh $hostname
     }
