@@ -588,11 +588,11 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
         if ! ssh $hostname "[ -d /home/$username/.oh-my-zsh ]"; then
             ssh $hostname "sh -c \"\$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\"" || error "Failed to install Oh My Zsh." || return 1
             ssh $hostname "sed -i '/ZSH_THEME=/d' ~/.zshrc && sed -i '1iZSH_THEME=\"candy\"' ~/.zshrc" || error "Failed to set ZSH_THEME." || return 1
-    
+
             ssh $hostname "sudo chown -R 1000:1000 ~/.oh-my-zsh" || error "Failed to change ownership of Oh My Zsh." || return 1
             ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-autosuggestions /home/$username/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
             ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /home/$username/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
-    
+
             ssh $hostname "sed -i '/plugins=(git)/d' ~/.zshrc && sed -i '1iplugins=(git zsh-autosuggestions zsh-syntax-highlighting)' ~/.zshrc"
         else 
             warning "Oh My Zsh is already installed. Skipping..."
@@ -735,15 +735,16 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
 	    if [ "$PORTAINER" = true ]; then
             info "Installing Portainer on $hostname..."
             ssh $hostname "sudo docker volume create portainer_data"
-            ssh $hostname "sudo docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce"
+            ssh $hostname "sudo docker run -d -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce"
 
             info "Fixing Portainer permissions..."
-            if [ -f /portainer ]; then
+            if ssh $hostname "test -f /portainer"; then
                 warning "Portainer directory does not exist, creating it"
                 ssh $hostname "sudo mkdir /portainer"
             fi
 	        ssh $hostname "sudo chown -R 1000:1000 /portainer" || error "Failed to fix Portainer permissions. Consider checking the directory permissions."
 
+            info "Consider adding to the app template box:' https://raw.githubusercontent.com/pi-hosted/pi-hosted/master/template/portainer-v2-arm64.json '"
 	    	success "Portainer is now running on at ${LINK}http://$ip_address:9000${RESET}"
 	    fi
     }
