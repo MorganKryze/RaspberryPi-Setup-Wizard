@@ -585,19 +585,19 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
 	    fi
 
 	    info "Installing Oh My Zsh..."
-	    if ssh $hostname "command -v omz >/dev/null 2>&1"; then
-	    	ssh $hostname "sh -c $(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || error "Failed to install Oh My Zsh." || return 1
-	    	ssh $hostname "sed -i '/ZSH_THEME=/d' ~/.zshrc && sed -i '1iZSH_THEME=\"candy\"' ~/.zshrc" || error "Failed to set ZSH_THEME." || return 1
-
-	    	ssh $hostname "sudo chown -R 1000:1000 ~/.oh-my-zsh" || error "Failed to change ownership of Oh My Zsh." || return 1
-	    	ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-autosuggestions /home/$username/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
-	    	ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /home/$username/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
-
-	    	ssh $hostname "sed -i '/plugins=(git)/d' ~/.zshrc && sed -i '1iplugins=(git zsh-autosuggestions zsh-syntax-highlighting)' ~/.zshrc"
+        if ! ssh $hostname "[ -d /home/$username/.oh-my-zsh ]"; then
+            ssh $hostname "sh -c \"\$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\"" || error "Failed to install Oh My Zsh." || return 1
+            ssh $hostname "sed -i '/ZSH_THEME=/d' ~/.zshrc && sed -i '1iZSH_THEME=\"candy\"' ~/.zshrc" || error "Failed to set ZSH_THEME." || return 1
+    
+            ssh $hostname "sudo chown -R 1000:1000 ~/.oh-my-zsh" || error "Failed to change ownership of Oh My Zsh." || return 1
+            ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-autosuggestions /home/$username/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+            ssh $hostname "sudo git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /home/$username/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+    
+            ssh $hostname "sed -i '/plugins=(git)/d' ~/.zshrc && sed -i '1iplugins=(git zsh-autosuggestions zsh-syntax-highlighting)' ~/.zshrc"
         else 
             warning "Oh My Zsh is already installed. Skipping..."
-            ssh $hostname "omz version"
-	    fi
+            ssh $hostname "zsh --version"
+        fi
 
 	    info "Installing Neofetch..."
 	    if ! ssh $hostname "command -v neofetch >/dev/null 2>&1"; then
@@ -633,12 +633,12 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
             ssh $hostname "sudo apt-get install unattended-upgrades -y" || error "Failed to install unattended-upgrades." || return 1
 
             info "Removing previous configuration..."
-            ssh $hostname "sudo rm /etc/apt/apt.conf.d/20auto-upgrades" || error "Failed to remove 20auto-upgrades. Please check permissions." || return 1
-            ssh $hostname "sudo rm /etc/apt/apt.conf.d/50unattended-upgrades"
+            ssh $hostname "sudo rm /etc/apt/apt.conf.d/20auto-upgrades" || warning "Failed to remove 20auto-upgrades. Please check permissions."
+            ssh $hostname "sudo rm /etc/apt/apt.conf.d/50unattended-upgrades" || warning "Failed to remove 50unattended-upgrades. Please check permissions."
 
             info "Adding new configuration..."
-            ssh $hostname "sudo curl -O https://raw.githubusercontent.com/MorganKryze/RaspberryPi-Setup-Wizard/main/conf/20auto-upgrades > /etc/apt/apt.conf.d/20auto-upgrades" || error "Failed to add 20auto-upgrades. Please check permissions." || return 1
-            ssh $hostname "sudo curl -O https://raw.githubusercontent.com/MorganKryze/RaspberryPi-Setup-Wizard/main/conf/50unattended-upgrades > /etc/apt/apt.conf.d/50unattended-upgrades" || error "Failed to add 50unattended-upgrades. Please check permissions." || return 1
+            ssh $hostname "curl -O https://raw.githubusercontent.com/MorganKryze/RaspberryPi-Setup-Wizard/main/conf/20auto-upgrades | sudo tee /etc/apt/apt.conf.d/20auto-upgrades" || error "Failed to add 20auto-upgrades. Please check permissions." || return 1
+            ssh $hostname "curl -O https://raw.githubusercontent.com/MorganKryze/RaspberryPi-Setup-Wizard/main/conf/50unattended-upgrades | sudo tee /etc/apt/apt.conf.d/50unattended-upgrades" || error "Failed to add 50unattended-upgrades. Please check permissions." || return 1
 
             info "Enabling unattended-upgrades..."
             ssh $hostname "sudo unattended-upgrade -d" || error "Failed to enable unattended-upgrades." || return 1
