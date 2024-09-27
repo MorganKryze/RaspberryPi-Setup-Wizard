@@ -30,26 +30,26 @@ function green() {
 # Displays an error message when a command fails.
 # $1: The error message to display.
 function error {
-  txt "${RED}[ ERROR ]${RESET} $1${RESET}"
+  txt "[${RED}   ERROR   ${RESET}] $1${RESET}"
   return 1
 }
 
 # Displays an information message.
 # $1: The message to display.
 function info {
-  echo "${BLUE}[ INFO ]${RESET} $1${RESET}"
+  echo "[${BLUE}    INFO   ${RESET}] $1${RESET}"
 }
 
 # Displays a warning message.
 # $1: The message to display.
 function warning {
-  echo "${ORANGE}[ WARNING ]${RESET} $1${RESET}"
+  echo "[${ORANGE}  WARNING  ${RESET}] $1${RESET}"
 }
 
 # Displays a success message.
 # $1: The message to display.
 function success {
-  echo "${GREEN}[ SUCCESS ]${RESET} $1${RESET}"
+  echo "[${GREEN}  SUCCESS  ${RESET}] $1${RESET}"
 }
 
 # Displays a description of a function.
@@ -401,6 +401,63 @@ function rpi() {
 
         success "The Raspberry Pi Wizard has been updated."
     }
+
+    # Sets up a hostname for a defined machine given an its IP address.
+    # $1: Your username.
+    # $2: The hostname for the device.
+    # $3: The IP address of the device.
+    function setup-hostname() {
+        description host "sets up a hostname for a defined machine given an its IP address."
+        
+        error "Not implemented yet."
+
+        # usr=$1
+        # host=$2
+        # ip=$3
+
+        # info "Testing out if hostname is already working..."
+        # if ! ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o BatchMode=yes $usr@$host "echo Connexion test passed!"; then
+        #     warning "Hostname $host is not working. Setting up the hostname..."
+
+        #     info "Adding the hostname and IP address to the /etc/hosts file on the local machine..."
+        #     if ! grep -q "$ip $host" /etc/hosts; then
+        #         echo "$ip $host" | sudo tee -a /etc/hosts > /dev/null || error "Failed to add the hostname to your known host locally." || return 1
+        #     else
+        #         info "Hostname $host is already mapped to $ip in /etc/hosts."
+        #     fi
+
+        #     info "Setting the hostname on the remote machine..."
+        #     if ! ssh $usr@$ip "hostname" | grep -q "$host"; then
+        #         ssh $usr@$ip "sudo -S hostnamectl set-hostname $host" || error "Failed to set the new hostname." || return 1
+        #     else
+        #         info "Hostname $host is already set on the remote machine."
+        #     fi
+
+        #     info "Installing Avahi on the remote machine..."
+        #     if ! ssh $usr@$ip "dpkg -s avahi-daemon | grep -q installed"; then
+        #         ssh $usr@$ip "sudo apt-get install -y avahi-daemon" || error "Failed to install avahi service." || return 1
+        #     else
+        #         info "Avahi is already installed on the remote machine."
+        #     fi
+
+        #     info "Configuring Avahi to advertise the hostname..."
+        #     if ! ssh $usr@$ip "grep -q '^host-name=$host$' /etc/avahi/avahi-daemon.conf"; then
+        #         ssh $usr@$ip "sudo sed -i 's/^host-name=.*$/host-name=$host/' /etc/avahi/avahi-daemon.conf" || error "Failed to apply configuration to avahi." || return 1
+        #         ssh $usr@$ip "sudo systemctl restart avahi-daemon" || error "Failed to restart avahi to apply changes." || return 1
+        #     else
+        #         info "Avahi is already configured to advertise the hostname $host."
+        #     fi
+
+        #     if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o BatchMode=yes $usr@$host "echo Connexion test passed!"; then
+        #         success "Hostname $host has been set up for the machine at $ip!"
+        #     else
+        #         error "Failed to set up hostname $host for the machine at $ip!"
+        #     fi
+        # else
+        #     success "Hostname $host is already working on your machine at $ip!"
+        # fi
+    }
+
 
     # Stores the username and hostname in a JSON file.
     # $1: The username of the Raspberry Pi.
@@ -930,6 +987,9 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
             update)
                 rpi-update
                 ;;
+            host)
+                error "Usage: ${BLUE}rpi host ${RED}<hostname> <ip>${RESET}"
+                ;;
             link)
                 error "Usage: ${BLUE}rpi link ${RED}<username> <hostname>${RESET}"
                 ;;
@@ -975,6 +1035,9 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
                 ;;
             update)
                 error "Usage: ${BLUE}rpi update"
+                ;;
+            host)
+                error "Usage: ${BLUE}rpi host ${RED}<hostname> <ip>${RESET}"
                 ;;
             link)
                 error "Usage: ${BLUE}rpi link ${RED}<username> <hostname>${RESET}"
@@ -1029,6 +1092,13 @@ backend = %(sshd_backend)s' | sudo tee -a /etc/fail2ban/jail.local > /dev/null" 
                 ;;
             update)
                 error "Usage: ${BLUE}rpi update"
+                ;;
+            host)
+                if [ $# -eq 4 ]; then
+                    setup-hostname $2 $3 $4
+                else
+                    error "Usage: ${BLUE}rpi host ${RED}<username> <hostname> <ip>${RESET}"
+                fi
                 ;;
             link)
                 if [ $# -eq 3 ]; then
